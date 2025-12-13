@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "820738596352",
+    "project_id": "billchillin",
+    "storage_bucket": "billchillin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820738596352:android:0ee6651c822863ee2f82e5",
+        "android_client_info": {
+          "package_name": "com.example.bill_chillin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "820738596352-gckaaf7us8ne5ahnjps3bvd5bj6p995i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxhtHNlrXJrAj9PMZgwQ0WZ7q6WBwImv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "820738596352-gckaaf7us8ne5ahnjps3bvd5bj6p995i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "820738596352-pkm1qj378rlerjesskqb08irqbqsdn14.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yourcompany.billchillin"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
