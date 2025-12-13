@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/user_entity.dart';
@@ -10,13 +11,22 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl({required this.remoteDataSource});
 
+  Future<Either<Failure, UserEntity>> signInWithGoogle() async {
+    try {
+      final user = await remoteDataSource.signInWithGoogle();
+      return Right(user);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Lỗi đăng nhập Google'));
+    }
+  }
+
   @override
-  Future<Either<Failure, UserEntity>> loginWithEmailPassword(
+  Future<Either<Failure, UserEntity>> signInWithEmailPassword(
     String email,
     String password,
   ) async {
     try {
-      final userModel = await remoteDataSource.loginWithEmailPassword(
+      final userModel = await remoteDataSource.signInWithEmailPassword(
         email,
         password,
       );
@@ -42,10 +52,9 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, void>> logout() async {
+  Future<Either<Failure, void>> signOut() async {
     try {
-      await remoteDataSource.logout();
+      await remoteDataSource.signOut();
       return const Right(null);
     } on ServerException {
       return const Left(ServerFailure('Lỗi đăng xuất'));

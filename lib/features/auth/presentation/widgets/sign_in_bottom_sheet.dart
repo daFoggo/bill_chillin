@@ -1,4 +1,4 @@
-import 'package:bill_chillin/features/auth/presentation/pages/login_page.dart';
+import 'package:bill_chillin/features/auth/presentation/pages/auth_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,14 +6,14 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-class LoginBottomSheet extends StatefulWidget {
-  const LoginBottomSheet({super.key});
+class SignInBottomSheet extends StatefulWidget {
+  const SignInBottomSheet({super.key});
 
   @override
-  State<LoginBottomSheet> createState() => _LoginBottomSheetState();
+  State<SignInBottomSheet> createState() => _SignInBottomSheetState();
 }
 
-class _LoginBottomSheetState extends State<LoginBottomSheet> {
+class _SignInBottomSheetState extends State<SignInBottomSheet> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -27,10 +27,10 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
     super.dispose();
   }
 
-  void _onLoginPressed() {
+  void _onSignInPressed() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        AuthLoginEvent(
+        AuthSignInEvent(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         ),
@@ -163,7 +163,7 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                     child: FilledButton(
                       onPressed: (state is AuthLoading)
                           ? null
-                          : _onLoginPressed,
+                          : _onSignInPressed,
                       child: (state is AuthLoading)
                           ? SizedBox(
                               height: 24,
@@ -174,7 +174,7 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                               ),
                             )
                           : const Text(
-                              "Login",
+                              "Sign In",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

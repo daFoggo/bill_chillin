@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../pages/login_page.dart'; // Import để lấy hàm showLoginSheet
+import '../pages/auth_page.dart';
 
 class SignUpBottomSheet extends StatefulWidget {
   const SignUpBottomSheet({super.key});
@@ -43,7 +43,6 @@ class _SignUpBottomSheetState extends State<SignUpBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Xử lý bàn phím che
     final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocConsumer<AuthBloc, AuthState>(
@@ -150,7 +149,6 @@ class _SignUpBottomSheetState extends State<SignUpBottomSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Nút Sign Up
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -178,10 +176,10 @@ class _SignUpBottomSheetState extends State<SignUpBottomSheet> {
                       TextButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          showLoginBottomSheet(context);
+                          showSignInBottomSheet(context);
                         },
                         child: const Text(
-                          "Log in",
+                          "Sign In",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),

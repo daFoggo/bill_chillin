@@ -8,10 +8,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
-    on<AuthLoginEvent>((event, emit) async {
-      emit(AuthLoading()); // Bắt đầu xoay
+    on<AuthGoogleSignInEvent>((event, emit) async {
+      emit(AuthLoading());
+      final result = await authRepository.signInWithGoogle();
+      result.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (user) => emit(AuthAuthenticated(user)),
+      );
+    });
 
-      final result = await authRepository.loginWithEmailPassword(
+    on<AuthSignInEvent>((event, emit) async {
+      emit(AuthLoading());
+
+      final result = await authRepository.signInWithEmailPassword(
         event.email,
         event.password,
       );
@@ -34,10 +43,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     });
 
-    on<AuthLogoutEvent>((event, emit) async {
+    on<AuthSignOutEvent>((event, emit) async {
       emit(AuthLoading());
-      await authRepository.logout();
-      emit(AuthUnauthenticated());
+      final result = await authRepository.signOut();
+      result.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (_) => emit(AuthUnauthenticated()),
+      );
     });
 
     on<AuthCheckStatusEvent>((event, emit) async {
