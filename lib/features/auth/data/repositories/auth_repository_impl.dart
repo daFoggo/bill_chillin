@@ -11,6 +11,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl({required this.remoteDataSource});
 
+  @override
   Future<Either<Failure, UserEntity>> signInWithGoogle() async {
     try {
       final user = await remoteDataSource.signInWithGoogle();
@@ -52,6 +53,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
   Future<Either<Failure, void>> signOut() async {
     try {
       await remoteDataSource.signOut();

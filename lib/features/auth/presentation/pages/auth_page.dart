@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart'; // Import State để check trạng thái
+import '../bloc/auth_state.dart';
 import '../widgets/sign_in_bottom_sheet.dart';
 import '../widgets/sign_up_bottom_sheet.dart';
 
@@ -21,38 +21,28 @@ class _AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-    // Tạm thời comment dòng này lại để test nút Google cho dễ,
-    // đỡ bị cái BottomSheet che mất nút Google mỗi khi load lại.
-    // SchedulerBinding.instance.addPostFrameCallback((_) {
-    //   showSignInBottomSheet(context);
-    // });
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      showSignInBottomSheet(context);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // --- BẮT ĐẦU SỬA TỪ ĐÂY ---
-    // Bọc Scaffold bằng BlocConsumer để vừa nghe (listener) vừa vẽ (builder)
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
-        // 1. XỬ LÝ SIDE EFFECT (Chuyển trang, thông báo lỗi)
-
         if (state is AuthAuthenticated) {
-          // Đăng nhập thành công -> Chuyển sang HomePage
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
         } else if (state is AuthFailure) {
-          // Đăng nhập thất bại -> Hiện SnackBar đỏ
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
       builder: (context, state) {
-        // 2. XỬ LÝ GIAO DIỆN (Loading)
-        // Kiểm tra xem có đang loading không
         final isLoading = state is AuthLoading;
 
         return Scaffold(
@@ -80,14 +70,12 @@ class _AuthPageState extends State<AuthPage> {
 
                   const Spacer(flex: 3),
 
-                  // Nút Sign In
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: FilledButton.icon(
-                        // Nếu đang loading thì disable nút này
                         onPressed: isLoading
                             ? null
                             : () => showSignInBottomSheet(context),
@@ -101,7 +89,6 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Nút Create Account
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: SizedBox(
@@ -147,7 +134,6 @@ class _AuthPageState extends State<AuthPage> {
 
                   const SizedBox(height: 24),
 
-                  // --- NÚT GOOGLE (CÓ HIỆU ỨNG LOADING) ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: SizedBox(
@@ -159,11 +145,9 @@ class _AuthPageState extends State<AuthPage> {
                           foregroundColor: Colors.black87,
                           elevation: 2,
                         ),
-                        // Nếu đang loading thì disable nút (null)
                         onPressed: isLoading
                             ? null
                             : () {
-                                // Gửi sự kiện khi bấm
                                 context.read<AuthBloc>().add(
                                   AuthGoogleSignInEvent(),
                                 );
@@ -209,7 +193,6 @@ class _AuthPageState extends State<AuthPage> {
   }
 }
 
-// ... Giữ nguyên 2 hàm showBottomSheet ở dưới
 void showSignInBottomSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,

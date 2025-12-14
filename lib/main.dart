@@ -27,8 +27,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      // 1. THAY ĐỔI Ở ĐÂY:
-      // Thêm ..add(...) để bắn sự kiện kiểm tra đăng nhập ngay khi App mở lên
       create: (_) => di.sl<AuthBloc>()..add(AuthCheckStatusEvent()),
 
       child: MaterialApp(
@@ -36,25 +34,19 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
         ),
 
-        // 2. THAY ĐỔI Ở ĐÂY:
-        // Dùng BlocBuilder để điều hướng màn hình
         home: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
-            // Nếu đã đăng nhập -> Vào thẳng Home
             if (state is AuthAuthenticated) {
               return const HomePage();
             }
 
-            // Nếu chưa đăng nhập (hoặc lỗi) -> Vào AuthPage
             if (state is AuthUnauthenticated || state is AuthFailure) {
               return const AuthPage();
             }
 
-            // Mặc định hoặc khi đang Loading ban đầu -> Hiện màn hình chờ (Splash)
-            // Để tránh hiện Login Page 1 giây rồi mới nhảy sang Home
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
