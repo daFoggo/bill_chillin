@@ -135,7 +135,7 @@ class _ExpandableFabState extends State<ExpandableFab>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context).colorScheme;
 
     return CompositedTransformTarget(
       link: _layerLink,
@@ -145,15 +145,14 @@ class _ExpandableFabState extends State<ExpandableFab>
         child: AnimatedBuilder(
           animation: _expandAnimation,
           builder: (context, child) {
-            final colorScheme = Theme.of(context).colorScheme;
             final backgroundColor = Color.lerp(
-              colorScheme.primary,
-              colorScheme.surfaceContainerHigh,
+              theme.primary,
+              theme.surfaceContainerHigh,
               _expandAnimation.value,
             );
             final foregroundColor = Color.lerp(
-              colorScheme.onPrimary,
-              colorScheme.onSurface,
+              theme.onPrimary,
+              theme.onSurface,
               _expandAnimation.value,
             );
 
@@ -233,15 +232,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return SizedBox(
       width: 140,
       height: 48,
       child: FloatingActionButton.extended(
         onPressed: onPressed,
         heroTag: null,
-        // backgroundColor: theme.colorScheme.secondaryContainer,
-        // foregroundColor: theme.colorScheme.onSecondaryContainer,
         elevation: 3,
         label: Text(label),
         icon: icon,
