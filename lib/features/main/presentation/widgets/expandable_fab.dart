@@ -54,9 +54,6 @@ class _ExpandableFabState extends State<ExpandableFab>
         _controller.reverse().then((_) {
           if (!_open) _removeOverlay();
         });
-        // We defer removing overlay to allow animation to play?
-        // Actually, typically we keep it during reverse animation.
-        // But here we'll handle it carefully.
       }
     });
   }
@@ -68,12 +65,11 @@ class _ExpandableFabState extends State<ExpandableFab>
   }
 
   void _insertOverlay() {
-    _removeOverlay(); // Safety check
+    _removeOverlay();
     _overlayEntry = OverlayEntry(
       builder: (context) {
         return Stack(
           children: [
-            // 1. Full screen closer
             Positioned.fill(
               child: GestureDetector(
                 onTap: _close,
@@ -81,23 +77,13 @@ class _ExpandableFabState extends State<ExpandableFab>
                 child: Container(color: Colors.transparent),
               ),
             ),
-            // 2. The Buttons
-            // We use CompositedTransformFollower to stick to the FAB
             Positioned(
-              width: 56, // Match FAB width
-              height: 200, // Enough height for the menu
+              width: 56,
+              height: 200, 
               child: CompositedTransformFollower(
                 link: _layerLink,
                 showWhenUnlinked: false,
-                // Offset: We want it to grow UPWARDS from the FAB.
-                // The FAB anchor is (0,0) at top-left of the FAB widget.
-                // If we want alignment bottom-center, we should position the follower.
-                // However, simpler is: Render the stack logic here.
                 offset: const Offset(0, -200 + 56),
-                // Shift up so the bottom of this 200-h box aligns with bottom of FAB?
-                // Let's adjust offset logic.
-                // If the menu is a Column of buttons, we want the bottom of the column
-                // to be near the top of the FAB.
                 child: AlignmentStack(
                   animation: _expandAnimation,
                   children: [

@@ -22,8 +22,6 @@ class AddPersonalExpenseEvent extends PersonalExpensesEvent {
   List<Object> get props => [transaction];
 }
 
-// Bạn có thể thêm Delete/Update Event sau
-
 enum SortCriteria { dateDesc, dateAsc, category }
 
 class ChangeMonthEvent extends PersonalExpensesEvent {

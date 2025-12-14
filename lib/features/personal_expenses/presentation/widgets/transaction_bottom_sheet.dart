@@ -27,15 +27,13 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
   late TextEditingController _noteController;
   late String _type;
   late DateTime _selectedDate;
-
-  // Dummy Categories (for now)
   final List<Map<String, String>> _categories = [
     {'id': '1', 'name': 'Food & Drink', 'icon': '🍔'},
     {'id': '2', 'name': 'Transport', 'icon': '🚗'},
     {'id': '3', 'name': 'Shopping', 'icon': '🛍️'},
     {'id': '4', 'name': 'Entertainment', 'icon': '🎬'},
     {'id': '5', 'name': 'Bills', 'icon': '💡'},
-    {'id': '6', 'name': 'Salary', 'icon': '💰'}, // Income example
+    {'id': '6', 'name': 'Salary', 'icon': '💰'},
   ];
   late Map<String, String> _selectedCategory;
 
@@ -51,7 +49,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     _selectedDate = t?.date ?? DateTime.now();
 
     if (t != null) {
-      // Try to find existing category or default
       _selectedCategory = _categories.firstWhere(
         (c) => c['id'] == t.categoryId,
         orElse: () => {
@@ -88,7 +85,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Type Selector
           SegmentedButton<String>(
             segments: const [
               ButtonSegment(value: 'expense', label: Text('Expense')),
@@ -103,7 +99,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Amount
           TextField(
             controller: _amountController,
             keyboardType: TextInputType.number,
@@ -116,7 +111,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Category Selector
           InkWell(
             onTap: _showCategorySelectionSheet,
             borderRadius: BorderRadius.circular(4),
@@ -137,7 +131,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Date Picker
           InkWell(
             onTap: () async {
               final picked = await showDatePicker(
@@ -166,7 +159,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Note
           TextField(
             controller: _noteController,
             decoration: const InputDecoration(
@@ -176,7 +168,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
           ),
           const SizedBox(height: 24),
 
-          // Buttons
           Row(
             children: [
               if (isEditing && widget.onDelete != null)
@@ -214,7 +205,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     final amount = double.tryParse(amountText) ?? 0;
 
     final transaction = TransactionEntity(
-      id: widget.transaction?.id ?? const Uuid().v4(), // Generate ID if new
+      id: widget.transaction?.id ?? const Uuid().v4(),
       userId: widget.userId,
       amount: amount,
       type: _type,
@@ -238,7 +229,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       scrollControlDisabledMaxHeightRatio: 0.8,
       builder: (context) {
         return SizedBox(
-          // height: MediaQuery.of(context).size.height * 0.5,
           child: Column(
             children: [
               Padding(

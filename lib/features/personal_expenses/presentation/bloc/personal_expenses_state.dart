@@ -32,8 +32,6 @@ class PersonalExpensesLoaded extends PersonalExpensesState {
     sortCriteria,
     searchQuery,
   ];
-
-  // Helper getters can be added here if logic becomes complex
 }
 
 class PersonalExpensesError extends PersonalExpensesState {

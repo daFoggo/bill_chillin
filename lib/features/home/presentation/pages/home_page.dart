@@ -2,8 +2,11 @@ import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_event.dart';
 import 'package:bill_chillin/features/auth/presentation/pages/auth_page.dart';
 import 'package:bill_chillin/features/home/presentation/widgets/balance_card.dart';
-import 'package:bill_chillin/features/home/presentation/widgets/home_chart_card.dart';
+import 'package:bill_chillin/features/home/presentation/widgets/distribution_chart_card.dart';
+import 'package:bill_chillin/features/home/presentation/widgets/financial_trend_chart_card.dart';
 import 'package:bill_chillin/features/home/presentation/widgets/overview_cards.dart';
+import 'package:bill_chillin/features/home/presentation/bloc/home_bloc.dart';
+import 'package:bill_chillin/features/home/presentation/bloc/home_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,11 +21,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    // Mock Data
-    const double balance = 12500.00;
-    const double income = 4500.00;
-    const double expense = 1200.00;
 
     return Scaffold(
       appBar: AppBar(
@@ -44,58 +42,93 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Balance Card
-              const BalanceCard(balance: balance),
-              const SizedBox(height: 24),
+      body: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          double balance = 0;
+          double income = 0;
+          double expense = 0;
 
-              // Overview Header + Time Filter
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (state is HomeLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is HomeLoaded) {
+            balance = state.totalBalance;
+            income = state.totalIncome;
+            expense = state.totalExpense;
+          }
+          
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Overview",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
+                  // Balance Card
+                  // BalanceCard
+                  BalanceCard(
+                    balance: balance,
+                    distribution: state is HomeLoaded 
+                        ? state.categoryDistribution 
+                        : [],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Overview Header + Time Filter
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Overview",
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      _buildTimeFilter(theme),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Income / Expense Row
+                  Row(
+                    children: [
+                      OverviewCard(
+                        title: "Income",
+                        amount: income,
+                        icon: Icons.arrow_downward,
+                        isIncome: true,
+                      ),
+                      const SizedBox(width: 16),
+                      OverviewCard(
+                        title: "Expense",
+                        amount: expense,
+                        icon: Icons.arrow_upward,
+                        isIncome: false,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Chart Section
+                  // Chart Section
+                  if (state is HomeLoaded) ...[
+                    DistributionChartCard(
+                      expenseDistribution: state.expenseDistribution,
+                      incomeDistribution: state.incomeDistribution,
                     ),
-                  ),
-                  _buildTimeFilter(theme),
+                    const SizedBox(height: 16),
+                    FinancialTrendChartCard(
+                      monthlyExpenseTrends: state.monthlyExpenseTrends,
+                      monthlyIncomeTrends: state.monthlyIncomeTrends,
+                    ),
+                  ],
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Income / Expense Row
-              Row(
-                children: [
-                  OverviewCard(
-                    title: "Income",
-                    amount: income,
-                    icon: Icons.arrow_downward,
-                    isIncome: true,
-                  ),
-                  const SizedBox(width: 16),
-                  OverviewCard(
-                    title: "Expense",
-                    amount: expense,
-                    icon: Icons.arrow_upward,
-                    isIncome: false,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Chart Section
-              const HomeChartCard(),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

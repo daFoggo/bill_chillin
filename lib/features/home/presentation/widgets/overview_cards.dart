@@ -39,8 +39,7 @@ class OverviewCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color:
-                      iconBackgroundColor, // theme.colorScheme.primary if Income
+                  color: iconBackgroundColor,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: iconColor, size: 20),

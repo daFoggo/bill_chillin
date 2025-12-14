@@ -8,7 +8,6 @@ class MonthlyTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Generate list of months for the current year
     final now = DateTime.now();
     final months = List.generate(12, (index) {
       return DateTime(now.year, index + 1);

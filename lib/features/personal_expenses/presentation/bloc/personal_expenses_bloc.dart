@@ -17,7 +17,6 @@ class PersonalExpensesBloc
     on<ChangeSortCriteriaEvent>(_onChangeSort);
     on<DeleteTransactionEvent>(_onDelete);
     on<DeleteMultipleTransactionsEvent>(_onDeleteMultiple);
-    // AddTransactionEvent logic update if needed, or keep existing but update _allTransactions
     on<AddPersonalExpenseEvent>(_onAdd);
     on<UpdateTransactionEvent>(_onUpdate);
     on<SearchTransactionEvent>(_onSearch);
@@ -42,8 +41,6 @@ class PersonalExpensesBloc
       transactions,
     ) {
       _allTransactions = transactions;
-      // Default to current month or the month of the latest transaction?
-      // Requirement says "monthly tabs", let's default to current wall-clock month
       final currentMonth = DateTime(now.year, now.month);
       final filtered = _applyFilterAndSort(
         _allTransactions,
@@ -109,16 +106,6 @@ class PersonalExpensesBloc
     AddPersonalExpenseEvent event,
     Emitter<PersonalExpensesState> emit,
   ) async {
-    // Existing logic but remember to refresh list
-    // For simplicity, let's just re-load for now to be safe,
-    // or manually add to _allTransactions if we want to be optimistic.
-    // Let's stick to safe re-load pattern:
-    // But wait, the previous implementation emitted OperationSuccess then Load.
-    // That is fine.
-
-    // emit(PersonalExpensesLoading()); // Don't emit loading here if we want to keep current view stable?
-    // Actually, usually we show a loading overlay or just wait.
-    // Let's use the provided logic pattern:
 
     final result = await repository.addTransaction(event.transaction);
 
@@ -142,7 +129,6 @@ class PersonalExpensesBloc
     );
     result.fold((failure) => emit(PersonalExpensesError(failure.message)), (_) {
       emit(const PersonalExpensesOperationSuccess("Transaction deleted"));
-      // Optimistic update or reload? Reload is safer.
       add(LoadPersonalExpensesEvent(event.userId));
     });
   }
@@ -186,8 +172,6 @@ class PersonalExpensesBloc
     DeleteMultipleTransactionsEvent event,
     Emitter<PersonalExpensesState> emit,
   ) async {
-    // Handling multiple deletes. Ideally repo should support batch.
-    // Looping for now.
     for (final id in event.transactionIds) {
       await repository.deleteTransaction(id, event.userId);
     }
@@ -203,12 +187,10 @@ class PersonalExpensesBloc
     SortCriteria sortCriteria,
     String? searchQuery,
   ) {
-    // 1. Filter by month
     var filtered = all.where((t) {
       return t.date.year == month.year && t.date.month == month.month;
     }).toList();
 
-    // 2. Filter by Search Query
     if (searchQuery != null && searchQuery.isNotEmpty) {
       final query = searchQuery.toLowerCase();
       filtered = filtered.where((t) {
@@ -219,7 +201,6 @@ class PersonalExpensesBloc
       }).toList();
     }
 
-    // 3. Sort
     filtered.sort((a, b) {
       switch (sortCriteria) {
         case SortCriteria.dateDesc:

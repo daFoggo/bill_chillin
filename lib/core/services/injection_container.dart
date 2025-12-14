@@ -6,6 +6,7 @@ import 'package:bill_chillin/features/personal_expenses/data/datasources/persona
 import 'package:bill_chillin/features/personal_expenses/data/repositories/personal_expenses_repository_impl.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/repositories/personal_expenses_repository.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_bloc.dart';
+import 'package:bill_chillin/features/home/presentation/bloc/home_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -55,4 +56,7 @@ Future<void> init() async {
   sl.registerFactory<PersonalExpensesBloc>(
     () => PersonalExpensesBloc(repository: sl()),
   );
+
+  //! 4. Feature: Home
+  sl.registerFactory<HomeBloc>(() => HomeBloc(repository: sl()));
 }

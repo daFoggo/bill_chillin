@@ -8,14 +8,12 @@ class TransactionEntity extends Equatable {
   final String type; // 'expense' (chi) hoặc 'income' (thu)
   final DateTime date;
 
-  // Thông tin danh mục (Denormalized)
   final String categoryId;
   final String categoryName;
   final String categoryIcon;
 
   final String? note;
 
-  // Các trường nâng cao
   final List<String> searchKeywords;
   final String status; // 'confirmed' (đã chốt) | 'draft' (mới scan OCR)
   final String? imageUrl; // Link ảnh hóa đơn

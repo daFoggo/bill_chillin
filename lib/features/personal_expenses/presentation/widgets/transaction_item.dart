@@ -52,7 +52,7 @@ class TransactionItem extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Icon Box
+       
                 Container(
                   width: 48,
                   height: 48,
@@ -70,7 +70,7 @@ class TransactionItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Details
+            
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +94,7 @@ class TransactionItem extends StatelessWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme
                                 .colorScheme
-                                .primary, // Using primary color for category as valid
+                                .primary, 
                           ),
                         ),
                       Text(
@@ -106,7 +106,7 @@ class TransactionItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Amount
+            
                 Text(
                   '${isIncome ? '+' : '-'}${NumberFormat("#,##0").format(transaction.amount)}',
                   style: theme.textTheme.titleMedium?.copyWith(

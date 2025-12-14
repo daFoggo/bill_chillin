@@ -97,9 +97,7 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging)
-      return; // Wait for animation to finish? Or update immediately?
-    // Using indexIsChanging might skip the final settle.
-    // Let's us !indexIsChanging usually.
+      return;
     if (!_tabController.indexIsChanging) {
       final selectedMonth = DateTime(
         DateTime.now().year,
@@ -122,9 +120,6 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
           );
         }
         if (state is PersonalExpensesLoaded) {
-          // Sync tab controller if external change (e.g. init or otherwise)
-          // But avoid loop if we just triggered it.
-          // Checking if month matches current index
           if (state.currentMonth.month != _tabController.index + 1) {
             _tabController.animateTo(state.currentMonth.month - 1);
           }
@@ -187,7 +182,7 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
                         );
                       },
                       onLongPress: (transaction) {
-                        // Implement multi-select later
+                
                       },
                     ),
                   ),
@@ -195,7 +190,6 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
               ),
             ),
           ),
-          // Floating Action Button removed as per user feedback (redundant)
         );
       },
     );
