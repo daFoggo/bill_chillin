@@ -2,6 +2,10 @@ import 'package:bill_chillin/features/auth/data/data_sources/auth_remote_data_so
 import 'package:bill_chillin/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:bill_chillin/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bill_chillin/features/personal_expenses/data/datasources/personal_expenses_remote_data_source.dart';
+import 'package:bill_chillin/features/personal_expenses/data/repositories/personal_expenses_repository_impl.dart';
+import 'package:bill_chillin/features/personal_expenses/domain/repositories/personal_expenses_repository.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,15 +17,17 @@ import 'package:google_sign_in/google_sign_in.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  //! 1. External & Core (Firebase, Google, Local Storage...)
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
   await GoogleSignIn.instance.initialize(
     serverClientId: dotenv.env['GOOGLE_OAUTH_WEB_CLIENT_ID']!,
   );
-
   sl.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn.instance);
 
+  //! 2. Feature: Auth
+  // Data Source
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(
       firebaseAuth: sl(),
@@ -29,12 +35,24 @@ Future<void> init() async {
       googleSignIn: sl(),
     ),
   );
-
   // Repository
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(remoteDataSource: sl()),
   );
-
   // Bloc
   sl.registerFactory<AuthBloc>(() => AuthBloc(authRepository: sl()));
+
+  //! 3. Feature: Personal Expenses
+  // Data Source
+  sl.registerLazySingleton<PersonalExpensesRemoteDataSource>(
+    () => PersonalExpensesRemoteDataSourceImpl(firestore: sl()),
+  );
+  // Repository
+  sl.registerLazySingleton<PersonalExpensesRepository>(
+    () => PersonalExpensesRepositoryImpl(remoteDataSource: sl()),
+  );
+  // Bloc
+  sl.registerFactory<PersonalExpensesBloc>(
+    () => PersonalExpensesBloc(repository: sl()),
+  );
 }

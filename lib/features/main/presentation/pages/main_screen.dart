@@ -3,6 +3,7 @@ import 'package:bill_chillin/features/home/presentation/pages/home_page.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/pages/personal_expenses_page.dart';
 import 'package:bill_chillin/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:bill_chillin/features/main/presentation/widgets/expandable_fab.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -35,15 +36,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (context) => Center(child: Text("Add functionality here")),
-          );
+      floatingActionButton: ExpandableFab(
+        onCreateTransaction: () {
+          // TODO: Navigate to Create Transaction
         },
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
+        onScanReceipt: () {
+          // TODO: Navigate to Scan Receipt
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
