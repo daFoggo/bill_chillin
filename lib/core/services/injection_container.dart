@@ -36,5 +36,5 @@ Future<void> init() async {
   );
 
   // Bloc
-  sl.registerFactory(() => AuthBloc(authRepository: sl()));
+  sl.registerFactory<AuthBloc>(() => AuthBloc(authRepository: sl()));
 }
