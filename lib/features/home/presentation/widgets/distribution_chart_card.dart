@@ -27,7 +27,7 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
     final distribution = isExpense
         ? widget.expenseDistribution
         : widget.incomeDistribution;
-    
+
     // Fallback if empty
     final isEmpty = distribution.isEmpty;
 
@@ -43,7 +43,7 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
               children: [
                 Text(
                   "Analytics",
-                   style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.bold,
                   ),
@@ -55,7 +55,6 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
                       value: DistributionType.expense,
                       label: Text('Exp'),
                       icon: Icon(Icons.arrow_upward, size: 16),
-
                     ),
                     ButtonSegment(
                       value: DistributionType.income,
@@ -73,22 +72,22 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
                   style: ButtonStyle(
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                      (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.selected)) {
-                          return theme.colorScheme.primary;
-                        }
-                        return theme.colorScheme.secondaryContainer;
-                      },
-                    ),
-                    foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                      (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.selected)) {
-                          return theme.colorScheme.onPrimary;
-                        }
-                        return theme.colorScheme.onSurface;
-                      },
-                    ),
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>((
+                      Set<MaterialState> states,
+                    ) {
+                      if (states.contains(MaterialState.selected)) {
+                        return theme.colorScheme.primary;
+                      }
+                      return theme.colorScheme.secondaryContainer;
+                    }),
+                    foregroundColor: MaterialStateProperty.resolveWith<Color>((
+                      Set<MaterialState> states,
+                    ) {
+                      if (states.contains(MaterialState.selected)) {
+                        return theme.colorScheme.onPrimary;
+                      }
+                      return theme.colorScheme.onSurface;
+                    }),
                   ),
                 ),
               ],
@@ -106,18 +105,20 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
                   : PieChart(
                       PieChartData(
                         pieTouchData: PieTouchData(
-                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                            setState(() {
-                              if (!event.isInterestedForInteractions ||
-                                  pieTouchResponse == null ||
-                                  pieTouchResponse.touchedSection == null) {
-                                _touchedIndex = -1;
-                                return;
-                              }
-                              _touchedIndex = pieTouchResponse
-                                  .touchedSection!.touchedSectionIndex;
-                            });
-                          },
+                          touchCallback:
+                              (FlTouchEvent event, pieTouchResponse) {
+                                setState(() {
+                                  if (!event.isInterestedForInteractions ||
+                                      pieTouchResponse == null ||
+                                      pieTouchResponse.touchedSection == null) {
+                                    _touchedIndex = -1;
+                                    return;
+                                  }
+                                  _touchedIndex = pieTouchResponse
+                                      .touchedSection!
+                                      .touchedSectionIndex;
+                                });
+                              },
                         ),
                         borderData: FlBorderData(show: false),
                         sectionsSpace: 2,
@@ -128,21 +129,22 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
             ),
             const SizedBox(height: 24),
             // Legend
-             if (!isEmpty)
+            if (!isEmpty)
               Wrap(
                 spacing: 16,
                 runSpacing: 8,
                 alignment: WrapAlignment.center,
                 children: distribution.asMap().entries.map((entry) {
-                   final index = entry.key;
-                   final data = entry.value;
-                   final color = _getColor(theme, index);
-                   return _Indicator(
-                     color: color,
-                     text: data.categoryName,
-                     isSquare: false,
-                     textColor: theme.colorScheme.onSecondaryContainer,
-                   );
+                  final index = entry.key;
+                  final data = entry.value;
+                  final color = _getColor(theme, index);
+                  return _Indicator(
+                    color: color,
+                    text: data.categoryName,
+                    isSquare: false,
+                    size: 12,
+                    textColor: theme.colorScheme.onSecondaryContainer,
+                  );
                 }).toList(),
               ),
           ],
@@ -177,14 +179,14 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
   }
 
   Color _getColor(ThemeData theme, int index) {
-      final colors = [
-        theme.colorScheme.primary, 
-        theme.colorScheme.secondary,
-        theme.colorScheme.tertiary,
-        theme.colorScheme.error,
-        theme.colorScheme.primaryContainer,
-      ];
-      return colors[index % colors.length];
+    final colors = [
+      theme.colorScheme.primary,
+      theme.colorScheme.secondary,
+      theme.colorScheme.tertiary,
+      theme.colorScheme.error,
+      theme.colorScheme.primaryContainer,
+    ];
+    return colors[index % colors.length];
   }
 }
 
@@ -199,7 +201,7 @@ class _Indicator extends StatelessWidget {
     required this.color,
     required this.text,
     required this.isSquare,
-    this.size = 12,
+    required this.size,
     this.textColor,
   });
 
@@ -224,7 +226,7 @@ class _Indicator extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: textColor,
           ),
-        )
+        ),
       ],
     );
   }
