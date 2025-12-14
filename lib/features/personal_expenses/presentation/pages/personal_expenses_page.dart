@@ -1,6 +1,7 @@
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_bloc.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_event.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_state.dart';
@@ -24,6 +25,9 @@ class PersonalExpensesPage extends StatelessWidget {
       userId = authState.user.id;
     }
 
+    final personalExpensesBloc = context.read<PersonalExpensesBloc>();
+    final categoryBloc = context.read<CategoryBloc>();
+
     if (userId.isEmpty) return;
 
     showModalBottomSheet(
@@ -31,29 +35,35 @@ class PersonalExpensesPage extends StatelessWidget {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) {
-        return TransactionBottomSheet(
-          transaction: transaction,
-          userId: userId,
-          onSave: (newTransaction) {
-            if (transaction == null) {
-              context.read<PersonalExpensesBloc>().add(
-                AddPersonalExpenseEvent(newTransaction),
-              );
-            } else {
-              context.read<PersonalExpensesBloc>().add(
-                UpdateTransactionEvent(newTransaction),
-              );
-            }
-            Navigator.pop(ctx);
-          },
-          onDelete: transaction != null
-              ? () {
-                  context.read<PersonalExpensesBloc>().add(
-                    DeleteTransactionEvent(transaction.id, userId),
-                  );
-                  Navigator.pop(ctx);
-                }
-              : null,
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: personalExpensesBloc),
+            BlocProvider.value(value: categoryBloc),
+          ],
+          child: TransactionBottomSheet(
+            transaction: transaction,
+            userId: userId,
+            onSave: (newTransaction) {
+              if (transaction == null) {
+                personalExpensesBloc.add(
+                  AddPersonalExpenseEvent(newTransaction),
+                );
+              } else {
+                personalExpensesBloc.add(
+                  UpdateTransactionEvent(newTransaction),
+                );
+              }
+              Navigator.pop(ctx);
+            },
+            onDelete: transaction != null
+                ? () {
+                    personalExpensesBloc.add(
+                      DeleteTransactionEvent(transaction.id, userId),
+                    );
+                    Navigator.pop(ctx);
+                  }
+                : null,
+          ),
         );
       },
     );
@@ -88,16 +98,18 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
     _tabController.addListener(_onTabChanged);
   }
 
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   void _onTabChanged() {
-    if (_tabController.indexIsChanging)
-      return;
+    if (_tabController.indexIsChanging) return;
     if (!_tabController.indexIsChanging) {
       final selectedMonth = DateTime(
         DateTime.now().year,
@@ -124,6 +136,9 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
             _tabController.animateTo(state.currentMonth.month - 1);
           }
         }
+        if (state is PersonalExpensesLoaded && _searchController.text.isEmpty) {
+          // Reset search text if needed, or keep it sync if state has query
+        }
       },
       builder: (context, state) {
         if (state is PersonalExpensesLoading) {
@@ -147,25 +162,94 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
         }
 
         return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            elevation: 0,
+            title: SizedBox(
+              height: 45,
+              child: SearchBar(
+                controller: _searchController,
+                hintText: "Search transactions...",
+                hintStyle: MaterialStateProperty.all(
+                  Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                leading: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(
+                  Theme.of(context).colorScheme.surfaceContainerHigh,
+                ),
+                onChanged: (query) {
+                  context.read<PersonalExpensesBloc>().add(
+                    SearchTransactionEvent(query),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              PopupMenuButton<SortCriteria>(
+                icon: Icon(
+                  Icons.sort,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+                offset: const Offset(0, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: Theme.of(context).colorScheme.surface,
+                surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
+                initialValue: currentSort,
+                onSelected: (criteria) {
+                  context.read<PersonalExpensesBloc>().add(
+                    ChangeSortCriteriaEvent(criteria),
+                  );
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: SortCriteria.dateDesc,
+                    child: Row(
+                      children: [
+                        Icon(Icons.arrow_downward),
+                        SizedBox(width: 8),
+                        Text("Newest"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: SortCriteria.dateAsc,
+                    child: Row(
+                      children: [
+                        Icon(Icons.arrow_upward),
+                        SizedBox(width: 8),
+                        Text("Oldest"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: SortCriteria.category,
+                    child: Row(
+                      children: [
+                        Icon(Icons.category),
+                        SizedBox(width: 8),
+                        Text("By Category"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
           body: SafeArea(
             child: GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
               child: Column(
                 children: [
-                  TotalBalanceWidget(
-                    totalBalance: totalBalance,
-                    currentSortCriteria: currentSort,
-                    onSearch: (query) {
-                      context.read<PersonalExpensesBloc>().add(
-                        SearchTransactionEvent(query),
-                      );
-                    },
-                    onSortSelected: (criteria) {
-                      context.read<PersonalExpensesBloc>().add(
-                        ChangeSortCriteriaEvent(criteria),
-                      );
-                    },
-                  ),
+                  TotalBalanceWidget(totalBalance: totalBalance),
                   MonthlyTabWidget(tabController: _tabController),
                   Expanded(
                     child: TransactionListWidget(
@@ -181,9 +265,7 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
                           DeleteTransactionEvent(transaction.id, userId),
                         );
                       },
-                      onLongPress: (transaction) {
-                
-                      },
+                      onLongPress: (transaction) {},
                     ),
                   ),
                 ],

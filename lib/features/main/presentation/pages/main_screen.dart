@@ -8,6 +8,7 @@ import 'package:bill_chillin/features/home/presentation/bloc/home_event.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_event.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_state.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/pages/personal_expenses_page.dart';
 import 'package:bill_chillin/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
@@ -71,17 +72,20 @@ class _MainScreenState extends State<MainScreen> {
             return sl<HomeBloc>()..add(LoadHomeDataEvent(userId));
           },
         ),
+        BlocProvider<CategoryBloc>(create: (context) => sl<CategoryBloc>()),
       ],
       child: Builder(
         builder: (context) {
           return BlocListener<PersonalExpensesBloc, PersonalExpensesState>(
             listener: (context, state) {
-               if (state is PersonalExpensesOperationSuccess) {
-                 final authState = context.read<AuthBloc>().state;
-                 if (authState is AuthAuthenticated) {
-                   context.read<HomeBloc>().add(LoadHomeDataEvent(authState.user.id));
-                 }
-               }
+              if (state is PersonalExpensesOperationSuccess) {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  context.read<HomeBloc>().add(
+                    LoadHomeDataEvent(authState.user.id),
+                  );
+                }
+              }
             },
             child: Scaffold(
               body: _pages[_currentIndex],

@@ -1,6 +1,6 @@
+import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class FinancialTrendChartCard extends StatelessWidget {
   final Map<int, double> monthlyExpenseTrends;
@@ -15,7 +15,7 @@ class FinancialTrendChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Prepare spots
     final expenseSpots = _prepareSpots(monthlyExpenseTrends);
     final incomeSpots = _prepareSpots(monthlyIncomeTrends);
@@ -49,7 +49,10 @@ class FinancialTrendChartCard extends StatelessWidget {
                 // Legend
                 Row(
                   children: [
-                    _LegendItem(color: theme.colorScheme.tertiary, label: "Exp"),
+                    _LegendItem(
+                      color: theme.colorScheme.tertiary,
+                      label: "Exp",
+                    ),
                     const SizedBox(width: 8),
                     _LegendItem(color: theme.colorScheme.primary, label: "Inc"),
                   ],
@@ -67,7 +70,7 @@ class FinancialTrendChartCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        interval: 1, 
+                        interval: 1,
                         getTitlesWidget: (value, meta) {
                           const style = TextStyle(
                             fontWeight: FontWeight.bold,
@@ -75,13 +78,26 @@ class FinancialTrendChartCard extends StatelessWidget {
                           );
                           String text;
                           switch (value.toInt()) {
-                            case 1: text = 'Jan'; break;
-                            case 3: text = 'Mar'; break;
-                            case 5: text = 'May'; break;
-                            case 7: text = 'Jul'; break;
-                            case 9: text = 'Sep'; break;
-                            case 11: text = 'Nov'; break;
-                            default: return Container();
+                            case 1:
+                              text = 'Jan';
+                              break;
+                            case 3:
+                              text = 'Mar';
+                              break;
+                            case 5:
+                              text = 'May';
+                              break;
+                            case 7:
+                              text = 'Jul';
+                              break;
+                            case 9:
+                              text = 'Sep';
+                              break;
+                            case 11:
+                              text = 'Nov';
+                              break;
+                            default:
+                              return Container();
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
@@ -90,9 +106,15 @@ class FinancialTrendChartCard extends StatelessWidget {
                         },
                       ),
                     ),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 1,
@@ -121,41 +143,50 @@ class FinancialTrendChartCard extends StatelessWidget {
                   ],
                   // Tooltips
                   showingTooltipIndicators: [
-                    ...expenseSpots.where((s) => s.y > 0).map((s) => ShowingTooltipIndicators([
-                      LineBarSpot(
-                        LineChartBarData(spots: expenseSpots),
-                        0,
-                        s,
-                      )
-                    ])),
-                    ...incomeSpots.where((s) => s.y > 0).map((s) => ShowingTooltipIndicators([
-                      LineBarSpot(
-                         LineChartBarData(spots: incomeSpots),
-                         1,
-                         s,
-                      )
-                    ])),
+                    ...expenseSpots
+                        .where((s) => s.y > 0)
+                        .map(
+                          (s) => ShowingTooltipIndicators([
+                            LineBarSpot(
+                              LineChartBarData(spots: expenseSpots),
+                              0,
+                              s,
+                            ),
+                          ]),
+                        ),
+                    ...incomeSpots
+                        .where((s) => s.y > 0)
+                        .map(
+                          (s) => ShowingTooltipIndicators([
+                            LineBarSpot(
+                              LineChartBarData(spots: incomeSpots),
+                              1,
+                              s,
+                            ),
+                          ]),
+                        ),
                   ],
                   lineTouchData: LineTouchData(
-                     enabled: false,
-                     touchTooltipData: LineTouchTooltipData(
-                        getTooltipColor: (_) => Colors.transparent,
-                        tooltipPadding: const EdgeInsets.only(bottom: 8),
-                         getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                          return touchedBarSpots.map((barSpot) {
-                            final formatter = NumberFormat.compact();
-                            final isIncome = barSpot.barIndex == 1; // 1 is Income
-                            return LineTooltipItem(
-                              formatter.format(barSpot.y),
-                              TextStyle(
-                                color: isIncome ? theme.colorScheme.primary : theme.colorScheme.tertiary, 
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                            );
-                          }).toList();
-                        },
-                     ),
+                    enabled: false,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (_) => Colors.transparent,
+                      tooltipPadding: const EdgeInsets.only(bottom: 8),
+                      getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                        return touchedBarSpots.map((barSpot) {
+                          final isIncome = barSpot.barIndex == 1; // 1 is Income
+                          return LineTooltipItem(
+                            CurrencyUtil.formatCompact(barSpot.y),
+                            TextStyle(
+                              color: isIncome
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.tertiary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -169,7 +200,7 @@ class FinancialTrendChartCard extends StatelessWidget {
   List<FlSpot> _prepareSpots(Map<int, double> data) {
     final List<FlSpot> spots = [];
     for (int i = 1; i <= 12; i++) {
-        spots.add(FlSpot(i.toDouble(), data[i] ?? 0));
+      spots.add(FlSpot(i.toDouble(), data[i] ?? 0));
     }
     return spots;
   }
@@ -188,16 +219,10 @@ class _LegendItem extends StatelessWidget {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
       ],
     );
   }

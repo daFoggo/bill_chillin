@@ -1,6 +1,6 @@
+import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:bill_chillin/features/home/presentation/bloc/home_state.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class BalanceCard extends StatelessWidget {
   final double balance;
@@ -61,10 +61,7 @@ class BalanceCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              NumberFormat.currency(
-                locale: 'vi_VN',
-                symbol: currency,
-              ).format(balance),
+              CurrencyUtil.format(balance),
               style: theme.textTheme.displaySmall?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
@@ -90,7 +87,8 @@ class BalanceCard extends StatelessWidget {
                       height: 12,
                       child: Row(
                         children: budgets.map((budget) {
-                          final flex = ((budget['amount'] as double) * 100).toInt();
+                          final flex = ((budget['amount'] as double) * 100)
+                              .toInt();
                           return Expanded(
                             flex: flex > 0 ? flex : 1, // Ensure at least 1
                             child: Container(color: budget['color'] as Color),
@@ -128,7 +126,7 @@ class BalanceCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ]
+            ],
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -52,7 +53,6 @@ class TransactionItem extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-       
                 Container(
                   width: 48,
                   height: 48,
@@ -70,7 +70,7 @@ class TransactionItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-            
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,23 +92,34 @@ class TransactionItem extends StatelessWidget {
                         Text(
                           transaction.categoryName,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme
-                                .colorScheme
-                                .primary, 
+                            color: theme.colorScheme.primary,
                           ),
                         ),
-                      Text(
-                        DateFormat('dd MMM, HH:mm').format(transaction.date),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final date = transaction.date;
+                          final isMidnight = date.hour == 0 && date.minute == 0;
+
+                          String dateString = DateFormat('dd MMM').format(date);
+                          if (!isMidnight) {
+                            dateString +=
+                                ", ${DateFormat('HH:mm').format(date)}";
+                          }
+
+                          return Text(
+                            dateString,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-            
+
                 Text(
-                  '${isIncome ? '+' : '-'}${NumberFormat("#,##0").format(transaction.amount)}',
+                  '${isIncome ? '+' : '-'}${CurrencyUtil.formatAmount(transaction.amount)}',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: amountColor,
                     fontWeight: FontWeight.bold,

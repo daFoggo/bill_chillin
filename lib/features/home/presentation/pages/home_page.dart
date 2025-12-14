@@ -1,6 +1,5 @@
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:bill_chillin/features/auth/presentation/bloc/auth_event.dart';
-import 'package:bill_chillin/features/auth/presentation/pages/auth_page.dart';
+import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bill_chillin/features/home/presentation/widgets/balance_card.dart';
 import 'package:bill_chillin/features/home/presentation/widgets/distribution_chart_card.dart';
 import 'package:bill_chillin/features/home/presentation/widgets/financial_trend_chart_card.dart';
@@ -24,21 +23,51 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Home"),
+        title: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            String userName = 'User';
+            if (state is AuthAuthenticated &&
+                state.user.name != null &&
+                state.user.name!.isNotEmpty) {
+              userName = state.user.name!;
+            }
+            return Text(
+              "Hello, $userName!",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            );
+          },
+        ),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthBloc>().add(AuthSignOutEvent());
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AuthPage()),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                String? avatarUrl;
+                if (state is AuthAuthenticated) {
+                  avatarUrl = state.user.avatarUrl;
+                }
+
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to profile or show menu if needed
+                  },
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundImage: avatarUrl != null
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl == null
+                        ? const Icon(Icons.person, size: 20)
+                        : null,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -57,7 +86,7 @@ class _HomePageState extends State<HomePage> {
             income = state.totalIncome;
             expense = state.totalExpense;
           }
-          
+
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -68,8 +97,8 @@ class _HomePageState extends State<HomePage> {
                   // BalanceCard
                   BalanceCard(
                     balance: balance,
-                    distribution: state is HomeLoaded 
-                        ? state.categoryDistribution 
+                    distribution: state is HomeLoaded
+                        ? state.categoryDistribution
                         : [],
                   ),
                   const SizedBox(height: 24),

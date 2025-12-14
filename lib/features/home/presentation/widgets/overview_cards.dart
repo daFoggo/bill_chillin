@@ -1,5 +1,5 @@
+import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class OverviewCard extends StatelessWidget {
   final String title;
@@ -54,7 +54,7 @@ class OverviewCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "+${NumberFormat("#,##0").format(amount)}",
+                "+${CurrencyUtil.formatAmount(amount)}",
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSecondaryContainer,
