@@ -1,4 +1,5 @@
 import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_event.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class PersonalExpensesState extends Equatable {
@@ -13,9 +14,26 @@ class PersonalExpensesLoading extends PersonalExpensesState {}
 
 class PersonalExpensesLoaded extends PersonalExpensesState {
   final List<TransactionEntity> transactions;
-  const PersonalExpensesLoaded(this.transactions);
+  final DateTime currentMonth;
+  final SortCriteria sortCriteria;
+  final String searchQuery;
+
+  const PersonalExpensesLoaded(
+    this.transactions, {
+    required this.currentMonth,
+    this.sortCriteria = SortCriteria.dateDesc,
+    this.searchQuery = '',
+  });
+
   @override
-  List<Object> get props => [transactions];
+  List<Object> get props => [
+    transactions,
+    currentMonth,
+    sortCriteria,
+    searchQuery,
+  ];
+
+  // Helper getters can be added here if logic becomes complex
 }
 
 class PersonalExpensesError extends PersonalExpensesState {
@@ -26,6 +44,6 @@ class PersonalExpensesError extends PersonalExpensesState {
 }
 
 class PersonalExpensesOperationSuccess extends PersonalExpensesState {
-  final String message; // Ví dụ: "Thêm thành công"
+  final String message;
   const PersonalExpensesOperationSuccess(this.message);
 }

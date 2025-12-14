@@ -56,7 +56,10 @@ class _SignInBottomSheetState extends State<SignInBottomSheet> {
         } else if (state is AuthAuthenticated) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Signed in successfully! Chill out!")),
+            const SnackBar(
+              content: Text("Signed in successfully! Chill out!"),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       },

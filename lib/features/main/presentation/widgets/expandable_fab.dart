@@ -202,14 +202,12 @@ class AlignmentStack extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
-            // Manual Button (Top)
             Positioned(
-              bottom: 80 + (60 * animation.value), // Animate up
+              bottom: 80 + (60 * animation.value),
               child: Opacity(opacity: animation.value, child: children[0]),
             ),
-            // Scan Button (Bottom)
             Positioned(
-              bottom: 20 + (60 * animation.value), // Animate up
+              bottom: 20 + (60 * animation.value),
               child: Opacity(opacity: animation.value, child: children[1]),
             ),
           ],

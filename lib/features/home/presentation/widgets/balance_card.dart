@@ -21,10 +21,10 @@ class BalanceCard extends StatelessWidget {
       },
       {'name': 'Transport', 'amount': 0.1, 'color': theme.colorScheme.tertiary},
       {
-        'name': 'Another',
+        'name': 'Other',
         'amount': 0.2,
         'color': theme.colorScheme.onTertiaryContainer,
-      }, // Or another variant
+      },
     ];
 
     return Card(
@@ -70,8 +70,8 @@ class BalanceCard extends StatelessWidget {
                 Text(
                   "Monthly Budget Distribution",
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withOpacity(
-                      0.8,
+                    color: theme.colorScheme.onPrimaryContainer.withValues(
+                      alpha: 0.8,
                     ),
                   ),
                 ),

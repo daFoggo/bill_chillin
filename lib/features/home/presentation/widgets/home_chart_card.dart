@@ -22,7 +22,7 @@ class HomeChartCard extends StatelessWidget {
                   "Analytics",
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: theme.colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 IconButton(

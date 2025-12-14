@@ -1,62 +1,203 @@
-import 'package:bill_chillin/core/services/injection_container.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_bloc.dart';
+import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_event.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/personal_expenses_state.dart';
-import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_item.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/widgets/monthly_tab_widget.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/widgets/total_balance_widget.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_bottom_sheet.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PersonalExpensesPage extends StatelessWidget {
   const PersonalExpensesPage({super.key});
 
+  static void showTransactionBottomSheet(
+    BuildContext context, {
+    TransactionEntity? transaction,
+  }) {
+    final authState = context.read<AuthBloc>().state;
+    String userId = '';
+    if (authState is AuthAuthenticated) {
+      userId = authState.user.id;
+    }
+
+    if (userId.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) {
+        return TransactionBottomSheet(
+          transaction: transaction,
+          userId: userId,
+          onSave: (newTransaction) {
+            if (transaction == null) {
+              context.read<PersonalExpensesBloc>().add(
+                AddPersonalExpenseEvent(newTransaction),
+              );
+            } else {
+              context.read<PersonalExpensesBloc>().add(
+                UpdateTransactionEvent(newTransaction),
+              );
+            }
+            Navigator.pop(ctx);
+          },
+          onDelete: transaction != null
+              ? () {
+                  context.read<PersonalExpensesBloc>().add(
+                    DeleteTransactionEvent(transaction.id, userId),
+                  );
+                  Navigator.pop(ctx);
+                }
+              : null,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final authState = context.read<AuthBloc>().state;
-        String userId = '';
-        if (authState is AuthAuthenticated) {
-          userId = authState.user.id;
-        } // Handle unauthenticated state if necessary (though MainScreen guards it)
-
-        return sl<PersonalExpensesBloc>()
-          ..add(LoadPersonalExpensesEvent(userId));
-      },
-      child: const PersonalExpensesView(),
-    );
+    return const PersonalExpensesView();
   }
 }
 
-class PersonalExpensesView extends StatelessWidget {
+class PersonalExpensesView extends StatefulWidget {
   const PersonalExpensesView({super.key});
 
   @override
+  State<PersonalExpensesView> createState() => _PersonalExpensesViewState();
+}
+
+class _PersonalExpensesViewState extends State<PersonalExpensesView>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = DateTime.now().month - 1;
+    _tabController = TabController(
+      length: 12,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging)
+      return; // Wait for animation to finish? Or update immediately?
+    // Using indexIsChanging might skip the final settle.
+    // Let's us !indexIsChanging usually.
+    if (!_tabController.indexIsChanging) {
+      final selectedMonth = DateTime(
+        DateTime.now().year,
+        _tabController.index + 1,
+      );
+      context.read<PersonalExpensesBloc>().add(ChangeMonthEvent(selectedMonth));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Personal Expenses"), centerTitle: true),
-      body: BlocBuilder<PersonalExpensesBloc, PersonalExpensesState>(
-        builder: (context, state) {
-          if (state is PersonalExpensesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is PersonalExpensesError) {
-            return Center(child: Text("Error: ${state.message}"));
-          } else if (state is PersonalExpensesLoaded) {
-            if (state.transactions.isEmpty) {
-              return const Center(child: Text("No transactions yet."));
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.transactions.length,
-              itemBuilder: (context, index) {
-                return TransactionItem(transaction: state.transactions[index]);
-              },
-            );
+    return BlocConsumer<PersonalExpensesBloc, PersonalExpensesState>(
+      listener: (context, state) {
+        if (state is PersonalExpensesOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        if (state is PersonalExpensesLoaded) {
+          // Sync tab controller if external change (e.g. init or otherwise)
+          // But avoid loop if we just triggered it.
+          // Checking if month matches current index
+          if (state.currentMonth.month != _tabController.index + 1) {
+            _tabController.animateTo(state.currentMonth.month - 1);
           }
-          return const Center(child: Text("Start adding expenses!"));
-        },
-      ),
+        }
+      },
+      builder: (context, state) {
+        if (state is PersonalExpensesLoading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(strokeCap: StrokeCap.round),
+            ),
+          );
+        }
+
+        List<TransactionEntity> transactions = [];
+        double totalBalance = 0;
+        SortCriteria currentSort = SortCriteria.dateDesc;
+
+        if (state is PersonalExpensesLoaded) {
+          transactions = state.transactions;
+          currentSort = state.sortCriteria;
+          totalBalance = transactions.fold(0, (sum, t) {
+            return sum + (t.type == 'income' ? t.amount : -t.amount);
+          });
+        }
+
+        return Scaffold(
+          body: SafeArea(
+            child: GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: Column(
+                children: [
+                  TotalBalanceWidget(
+                    totalBalance: totalBalance,
+                    currentSortCriteria: currentSort,
+                    onSearch: (query) {
+                      context.read<PersonalExpensesBloc>().add(
+                        SearchTransactionEvent(query),
+                      );
+                    },
+                    onSortSelected: (criteria) {
+                      context.read<PersonalExpensesBloc>().add(
+                        ChangeSortCriteriaEvent(criteria),
+                      );
+                    },
+                  ),
+                  MonthlyTabWidget(tabController: _tabController),
+                  Expanded(
+                    child: TransactionListWidget(
+                      transactions: transactions,
+                      onTap: (transaction) =>
+                          PersonalExpensesPage.showTransactionBottomSheet(
+                            context,
+                            transaction: transaction,
+                          ),
+                      onDismissed: (transaction) {
+                        final userId = transaction.userId;
+                        context.read<PersonalExpensesBloc>().add(
+                          DeleteTransactionEvent(transaction.id, userId),
+                        );
+                      },
+                      onLongPress: (transaction) {
+                        // Implement multi-select later
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Floating Action Button removed as per user feedback (redundant)
+        );
+      },
     );
   }
 }

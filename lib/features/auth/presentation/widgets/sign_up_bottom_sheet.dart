@@ -57,7 +57,10 @@ class _SignUpBottomSheetState extends State<SignUpBottomSheet> {
         } else if (state is AuthAuthenticated) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Signed up successfully! Welcome!")),
+            const SnackBar(
+              content: Text("Signed up successfully! Welcome!"),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       },
