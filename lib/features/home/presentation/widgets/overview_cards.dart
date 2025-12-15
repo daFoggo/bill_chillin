@@ -54,7 +54,7 @@ class OverviewCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "+${CurrencyUtil.formatAmount(amount)}",
+                "+${CurrencyUtil.format(amount)}",
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSecondaryContainer,
