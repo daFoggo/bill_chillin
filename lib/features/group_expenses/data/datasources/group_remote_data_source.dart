@@ -13,6 +13,8 @@ abstract class GroupRemoteDataSource {
   Future<void> updateGroup(GroupModel group);
   Future<void> deleteGroup(String groupId);
 
+  Future<String> generateInviteLink(String groupId);
+
   // Group Transactions
   Future<void> addTransaction(String groupId, TransactionModel transaction);
   Future<void> updateTransaction(String groupId, TransactionModel transaction);
@@ -107,6 +109,14 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     } catch (e) {
       throw ServerException(e.toString());
     }
+  }
+
+  @override
+  Future<String> generateInviteLink(String groupId) async {
+    // Using https scheme which is more standard and clickable in many apps
+    // This will require Android App Links configuration for full seamlessness,
+    // but for testing, we can use an Intent Filter for this host.
+    return 'https://billchillin.com/app/join/$groupId';
   }
 
   @override

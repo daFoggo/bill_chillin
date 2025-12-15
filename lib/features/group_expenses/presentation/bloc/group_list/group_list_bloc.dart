@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../domain/entities/group_entity.dart';
 import '../../../domain/usecases/create_group_usecase.dart';
+import '../../../domain/usecases/join_group_via_link_usecase.dart';
 import '../../../domain/repositories/group_repository.dart';
 
 part 'group_list_event.dart';
@@ -11,14 +12,19 @@ part 'group_list_state.dart';
 class GroupListBloc extends Bloc<GroupListEvent, GroupListState> {
   final GroupRepository repository;
   final CreateGroupUseCase createGroupUseCase;
+  final JoinGroupViaLinkUseCase joinGroupViaLinkUseCase;
 
   List<GroupEntity> _allGroups = [];
 
-  GroupListBloc({required this.repository, required this.createGroupUseCase})
-    : super(GroupListInitial()) {
+  GroupListBloc({
+    required this.repository,
+    required this.createGroupUseCase,
+    required this.joinGroupViaLinkUseCase,
+  }) : super(GroupListInitial()) {
     on<LoadGroupsEvent>(_onLoadGroups);
     on<CreateNewGroupEvent>(_onCreateGroup);
     on<SearchGroupsEvent>(_onSearchGroups);
+    on<JoinGroupEvent>(_onJoinGroup);
   }
 
   Future<void> _onLoadGroups(
@@ -47,6 +53,24 @@ class GroupListBloc extends Bloc<GroupListEvent, GroupListState> {
       (failure) => emit(GroupListError(message: failure.toString())),
       (_) {
         add(LoadGroupsEvent(userId: event.group.members.first));
+      },
+    );
+  }
+
+  Future<void> _onJoinGroup(
+    JoinGroupEvent event,
+    Emitter<GroupListState> emit,
+  ) async {
+    final result = await joinGroupViaLinkUseCase(
+      JoinGroupViaLinkParams(
+        inviteCode: event.inviteCode,
+        userId: event.userId,
+      ),
+    );
+    result.fold(
+      (failure) => emit(GroupListError(message: failure.toString())),
+      (_) {
+        add(LoadGroupsEvent(userId: event.userId));
       },
     );
   }

@@ -30,4 +30,11 @@ abstract class GroupRepository {
   Future<Either<Failure, List<TransactionEntity>>> getGroupTransactions(
     String groupId,
   );
+
+  // Group Member Management
+  Future<Either<Failure, String>> generateInviteLink(String groupId);
+  Future<Either<Failure, void>> joinGroupViaLink(
+    String inviteCode,
+    String userId,
+  );
 }

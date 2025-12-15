@@ -34,7 +34,7 @@ class _AuthPageState extends State<AuthPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: Colors.red,
+              backgroundColor: colorScheme.error,
               behavior: SnackBarBehavior.floating,
             ),
           );

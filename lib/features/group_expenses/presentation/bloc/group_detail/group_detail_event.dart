@@ -55,3 +55,5 @@ class DeleteGroupEvent extends GroupDetailEvent {
 
   const DeleteGroupEvent({required this.groupId});
 }
+
+class ResetGroupLinkEvent extends GroupDetailEvent {}

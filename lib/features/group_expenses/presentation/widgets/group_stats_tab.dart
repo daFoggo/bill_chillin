@@ -9,6 +9,7 @@ class GroupStatsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     // My Status
@@ -48,7 +49,9 @@ class GroupStatsTab extends StatelessWidget {
                   Text(
                     "${netBalance >= 0 ? '+' : ''}${netBalance.toStringAsFixed(0)}",
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: netBalance >= 0 ? Colors.green : Colors.red,
+                      color: netBalance >= 0
+                          ? Colors.green
+                          : theme.colorScheme.error,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -61,8 +64,8 @@ class GroupStatsTab extends StatelessWidget {
                           const Text("I Owe"),
                           Text(
                             iOwe.toStringAsFixed(0),
-                            style: const TextStyle(
-                              color: Colors.red,
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

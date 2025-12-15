@@ -30,3 +30,12 @@ class SearchGroupsEvent extends GroupListEvent {
   @override
   List<Object> get props => [query];
 }
+
+class JoinGroupEvent extends GroupListEvent {
+  final String inviteCode;
+  final String userId;
+  const JoinGroupEvent({required this.inviteCode, required this.userId});
+
+  @override
+  List<Object> get props => [inviteCode, userId];
+}

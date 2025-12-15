@@ -19,6 +19,8 @@ import 'package:bill_chillin/features/group_expenses/domain/usecases/create_grou
 import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_debts_usecase.dart';
 import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_transactions_usecase.dart';
 import 'package:bill_chillin/features/group_expenses/domain/usecases/join_group_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/generate_invite_link_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/join_group_via_link_usecase.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_list/group_list_bloc.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_detail/group_detail_bloc.dart';
 import 'package:bill_chillin/features/group_expenses/domain/usecases/calculate_group_debts.dart';
@@ -113,15 +115,22 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DeleteGroupUseCase(sl()));
   sl.registerLazySingleton(() => UpdateGroupTransactionUseCase(sl()));
   sl.registerLazySingleton(() => DeleteGroupTransactionUseCase(sl()));
+  sl.registerLazySingleton(() => GenerateInviteLinkUseCase(sl()));
+  sl.registerLazySingleton(() => JoinGroupViaLinkUseCase(sl()));
 
   // Blocs
   sl.registerFactory<GroupListBloc>(
-    () => GroupListBloc(repository: sl(), createGroupUseCase: sl()),
+    () => GroupListBloc(
+      repository: sl(),
+      createGroupUseCase: sl(),
+      joinGroupViaLinkUseCase: sl(),
+    ),
   );
   sl.registerFactory<GroupDetailBloc>(
     () => GroupDetailBloc(
       repository: sl(),
       calculateGroupDebtsUseCase: sl(),
+      generateInviteLinkUseCase: sl(),
       addGroupTransactionUseCase: sl(),
       updateGroupUseCase: sl(),
       deleteGroupUseCase: sl(),
