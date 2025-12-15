@@ -9,16 +9,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class GroupTransactionsTab extends StatefulWidget {
+class GroupExpensesTab extends StatefulWidget {
   final GroupDetailLoaded state;
 
-  const GroupTransactionsTab({super.key, required this.state});
+  const GroupExpensesTab({super.key, required this.state});
 
   @override
-  State<GroupTransactionsTab> createState() => _GroupTransactionsTabState();
+  State<GroupExpensesTab> createState() => _GroupExpensesTabState();
 }
 
-class _GroupTransactionsTabState extends State<GroupTransactionsTab>
+class _GroupExpensesTabState extends State<GroupExpensesTab>
     with SingleTickerProviderStateMixin {
   late TabController _monthlyTabController;
 
@@ -55,10 +55,9 @@ class _GroupTransactionsTabState extends State<GroupTransactionsTab>
       return tx.date.month == selectedMonth && tx.date.year == currentYear;
     }).toList();
 
-    final totalMonthExpense = filteredTransactions.fold(
-      0.0,
-      (sum, tx) => sum + tx.amount,
-    );
+    final totalMonthExpense = filteredTransactions
+        .where((tx) => tx.type != 'settlement')
+        .fold(0.0, (sum, tx) => sum + tx.amount);
 
     return Column(
       children: [

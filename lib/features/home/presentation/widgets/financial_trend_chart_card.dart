@@ -62,130 +62,134 @@ class FinancialTrendChartCard extends StatelessWidget {
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          const style = TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          );
-                          String text;
-                          switch (value.toInt()) {
-                            case 1:
-                              text = 'Jan';
-                              break;
-                            case 3:
-                              text = 'Mar';
-                              break;
-                            case 5:
-                              text = 'May';
-                              break;
-                            case 7:
-                              text = 'Jul';
-                              break;
-                            case 9:
-                              text = 'Sep';
-                              break;
-                            case 11:
-                              text = 'Nov';
-                              break;
-                            default:
-                              return Container();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(text, style: style),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  minX: 1,
-                  maxX: 12,
-                  minY: 0,
-                  maxY: maxY,
-                  lineBarsData: [
-                    // Expense Line
-                    LineChartBarData(
-                      spots: expenseSpots,
-                      isCurved: true,
-                      color: theme.colorScheme.tertiary,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(show: true),
-                    ),
-                    // Income Line
-                    LineChartBarData(
-                      spots: incomeSpots,
-                      isCurved: true,
-                      color: theme.colorScheme.primary,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(show: true),
-                    ),
-                  ],
-                  // Tooltips
-                  showingTooltipIndicators: [
-                    ...expenseSpots
-                        .where((s) => s.y > 0)
-                        .map(
-                          (s) => ShowingTooltipIndicators([
-                            LineBarSpot(
-                              LineChartBarData(spots: expenseSpots),
-                              0,
-                              s,
-                            ),
-                          ]),
-                        ),
-                    ...incomeSpots
-                        .where((s) => s.y > 0)
-                        .map(
-                          (s) => ShowingTooltipIndicators([
-                            LineBarSpot(
-                              LineChartBarData(spots: incomeSpots),
-                              1,
-                              s,
-                            ),
-                          ]),
-                        ),
-                  ],
-                  lineTouchData: LineTouchData(
-                    enabled: false,
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => Colors.transparent,
-                      tooltipPadding: const EdgeInsets.only(bottom: 8),
-                      getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                        return touchedBarSpots.map((barSpot) {
-                          final isIncome = barSpot.barIndex == 1; // 1 is Income
-                          return LineTooltipItem(
-                            CurrencyUtil.formatCompactCurrency(barSpot.y),
-                            TextStyle(
-                              color: isIncome
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.tertiary,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            const style = TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 10,
-                            ),
-                          );
-                        }).toList();
-                      },
+                            );
+                            String text;
+                            switch (value.toInt()) {
+                              case 1:
+                                text = 'Jan';
+                                break;
+                              case 3:
+                                text = 'Mar';
+                                break;
+                              case 5:
+                                text = 'May';
+                                break;
+                              case 7:
+                                text = 'Jul';
+                                break;
+                              case 9:
+                                text = 'Sep';
+                                break;
+                              case 11:
+                                text = 'Nov';
+                                break;
+                              default:
+                                return Container();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(text, style: style),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    minX: 1,
+                    maxX: 12,
+                    minY: 0,
+                    maxY: maxY,
+                    lineBarsData: [
+                      // Expense Line
+                      LineChartBarData(
+                        spots: expenseSpots,
+                        isCurved: true,
+                        color: theme.colorScheme.tertiary,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(show: true),
+                      ),
+                      // Income Line
+                      LineChartBarData(
+                        spots: incomeSpots,
+                        isCurved: true,
+                        color: theme.colorScheme.primary,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(show: true),
+                      ),
+                    ],
+                    // Tooltips
+                    showingTooltipIndicators: [
+                      ...expenseSpots
+                          .where((s) => s.y > 0)
+                          .map(
+                            (s) => ShowingTooltipIndicators([
+                              LineBarSpot(
+                                LineChartBarData(spots: expenseSpots),
+                                0,
+                                s,
+                              ),
+                            ]),
+                          ),
+                      ...incomeSpots
+                          .where((s) => s.y > 0)
+                          .map(
+                            (s) => ShowingTooltipIndicators([
+                              LineBarSpot(
+                                LineChartBarData(spots: incomeSpots),
+                                1,
+                                s,
+                              ),
+                            ]),
+                          ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      enabled: false,
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => Colors.transparent,
+                        tooltipPadding: const EdgeInsets.only(bottom: 8),
+                        getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                          return touchedBarSpots.map((barSpot) {
+                            final isIncome =
+                                barSpot.barIndex == 1; // 1 is Income
+                            return LineTooltipItem(
+                              CurrencyUtil.formatCompactCurrency(barSpot.y),
+                              TextStyle(
+                                color: isIncome
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.tertiary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
                     ),
                   ),
                 ),
