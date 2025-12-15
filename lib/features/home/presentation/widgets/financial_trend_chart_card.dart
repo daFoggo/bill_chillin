@@ -175,7 +175,7 @@ class FinancialTrendChartCard extends StatelessWidget {
                         return touchedBarSpots.map((barSpot) {
                           final isIncome = barSpot.barIndex == 1; // 1 is Income
                           return LineTooltipItem(
-                            CurrencyUtil.formatCompact(barSpot.y),
+                            CurrencyUtil.formatCompactCurrency(barSpot.y),
                             TextStyle(
                               color: isIncome
                                   ? theme.colorScheme.primary

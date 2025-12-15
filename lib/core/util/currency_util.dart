@@ -27,4 +27,9 @@ class CurrencyUtil {
   static String formatCompact(num amount) {
     return _compactFormat.format(amount);
   }
+
+  /// Formats amount compactly with currency symbol (e.g. 1Tr đ, 100K đ)
+  static String formatCompactCurrency(num amount) {
+    return "${formatCompact(amount)} ${_currencyFormat.currencySymbol}";
+  }
 }

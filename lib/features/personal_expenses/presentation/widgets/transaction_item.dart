@@ -119,7 +119,7 @@ class TransactionItem extends StatelessWidget {
                 ),
 
                 Text(
-                  '${isIncome ? '+' : '-'}${CurrencyUtil.formatAmount(transaction.amount)}',
+                  '${isIncome ? '+' : '-'}${CurrencyUtil.format(transaction.amount)}',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: amountColor,
                     fontWeight: FontWeight.bold,

@@ -1,3 +1,4 @@
+import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:bill_chillin/features/home/presentation/bloc/home_state.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -140,7 +141,8 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
                   final color = _getColor(theme, index);
                   return _Indicator(
                     color: color,
-                    text: data.categoryName,
+                    text:
+                        "${data.categoryName} (${CurrencyUtil.formatCompactCurrency(data.totalAmount)})",
                     isSquare: false,
                     size: 12,
                     textColor: theme.colorScheme.onSecondaryContainer,

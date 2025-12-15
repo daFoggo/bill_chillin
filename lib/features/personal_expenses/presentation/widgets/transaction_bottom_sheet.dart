@@ -1,5 +1,6 @@
 import 'package:bill_chillin/core/util/thousands_separator_input_formatter.dart';
 import 'package:bill_chillin/core/util/currency_util.dart';
+import 'package:bill_chillin/features/group_expenses/domain/entities/group_entity.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_event.dart';
@@ -14,6 +15,7 @@ import 'package:uuid/uuid.dart';
 class TransactionBottomSheet extends StatefulWidget {
   final TransactionEntity? transaction;
   final String userId;
+  final GroupEntity? group;
   final Function(TransactionEntity) onSave;
   final VoidCallback? onDelete;
 
@@ -21,6 +23,7 @@ class TransactionBottomSheet extends StatefulWidget {
     super.key,
     this.transaction,
     required this.userId,
+    this.group,
     required this.onSave,
     this.onDelete,
   });
@@ -36,6 +39,10 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
   late DateTime _selectedDate;
   List<Map<String, String>> _categories = [];
   late Map<String, String> _selectedCategory;
+
+  // Group fields
+  late String _payerId;
+  late List<String> _selectedParticipants;
 
   // Default fallback categories
   final List<Map<String, String>> _defaultCategories = [
@@ -65,6 +72,19 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     _type = t?.type ?? 'expense';
     _selectedDate = t?.date ?? DateTime.now();
 
+    // Group defaults
+    _payerId = t?.payerId ?? widget.userId;
+    if (widget.group != null) {
+      _selectedParticipants =
+          t?.participants ?? List.from(widget.group!.members);
+      // Ensure current user is in participants if new transaction default
+      if (t == null && !_selectedParticipants.contains(widget.userId)) {
+        // Assuming users usually pay for themselves too, or default to all group members
+      }
+    } else {
+      _selectedParticipants = [];
+    }
+
     // Initial category setup (will be updated by bloc listener if needed)
     if (t != null) {
       _selectedCategory = {
@@ -82,6 +102,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEditing = widget.transaction != null;
+    final isGroupExpense = widget.group != null;
 
     return BlocListener<CategoryBloc, CategoryState>(
       listener: (context, state) {
@@ -101,9 +122,6 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
 
             // Optionally filter by type if needed, or just show all
             _categories = [..._defaultCategories, ...dynamicCats];
-
-            // If we just added a category/loaded, ensure selected is valid
-            // If t == null (new transaction) and we have dynamic cats, maybe leave default
           });
         }
       },
@@ -120,25 +138,31 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                isEditing ? "Edit Transaction" : "New Transaction",
+                isEditing
+                    ? "Edit Transaction"
+                    : (isGroupExpense
+                          ? "New Group Expense"
+                          : "New Transaction"),
                 style: theme.textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
 
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'expense', label: Text('Expense')),
-                  ButtonSegment(value: 'income', label: Text('Income')),
-                ],
-                selected: {_type},
-                onSelectionChanged: (Set<String> newSelection) {
-                  setState(() {
-                    _type = newSelection.first;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
+              if (!isGroupExpense) ...[
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'expense', label: Text('Expense')),
+                    ButtonSegment(value: 'income', label: Text('Income')),
+                  ],
+                  selected: {_type},
+                  onSelectionChanged: (Set<String> newSelection) {
+                    setState(() {
+                      _type = newSelection.first;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
 
               TextField(
                 controller: _amountController,
@@ -154,6 +178,56 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                 ],
               ),
               const SizedBox(height: 16),
+
+              if (isGroupExpense) ...[
+                // Payer Selection
+                InkWell(
+                  onTap: _showPayerSelectionSheet,
+                  borderRadius: BorderRadius.circular(4),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: "Paid By",
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    child: Text(
+                      _payerId == widget.userId
+                          ? 'You'
+                          : _payerId, // TODO: Map ID to Name
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Split Logic (Participants)
+                ExpansionTile(
+                  title: Text(
+                    "Split Between (${_selectedParticipants.length})",
+                  ),
+                  children: widget.group!.members.map((memberId) {
+                    final displayName = memberId == widget.userId
+                        ? 'You'
+                        : memberId;
+                    return CheckboxListTile(
+                      title: Text(displayName),
+                      value: _selectedParticipants.contains(memberId),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _selectedParticipants.add(memberId);
+                          } else {
+                            if (_selectedParticipants.length > 1) {
+                              // Prevent empty
+                              _selectedParticipants.remove(memberId);
+                            }
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               InkWell(
                 onTap: _showCategorySelectionSheet,
@@ -251,11 +325,21 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     final amount =
         double.tryParse(amountText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
+    Map<String, double>? splitDetails;
+    if (widget.group != null) {
+      // Split Logic: Equal split
+      final splitAmount = amount / _selectedParticipants.length;
+      splitDetails = {};
+      for (var p in _selectedParticipants) {
+        splitDetails[p] = splitAmount;
+      }
+    }
+
     final transaction = TransactionEntity(
       id: widget.transaction?.id ?? const Uuid().v4(),
       userId: widget.userId,
       amount: amount,
-      type: _type,
+      type: widget.group != null ? 'expense' : _type,
       date: _selectedDate,
       categoryId: _selectedCategory['id']!,
       categoryName: _selectedCategory['name']!,
@@ -263,6 +347,11 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       note: _noteController.text,
       createdAt: widget.transaction?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
+      groupId: widget.group?.id,
+      payerId: widget.group != null ? _payerId : null,
+      participants: widget.group != null ? _selectedParticipants : null,
+      splitDetails: splitDetails,
+      status: widget.group != null ? 'confirmed' : 'completed',
     );
 
     widget.onSave(transaction);
@@ -331,6 +420,67 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                       onTap: () {
                         setState(() {
                           _selectedCategory = cat;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPayerSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      scrollControlDisabledMaxHeightRatio: 0.8,
+      builder: (modalContext) {
+        return SizedBox(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Select Payer",
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: widget.group!.members.length,
+                  itemBuilder: (ctx, index) {
+                    final memberId = widget.group!.members[index];
+                    final displayName = memberId == widget.userId
+                        ? 'You'
+                        : memberId;
+                    final isSelected = memberId == _payerId;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text(displayName[0].toUpperCase()),
+                      ),
+                      title: Text(displayName),
+                      selected: isSelected,
+                      selectedTileColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
+                      trailing: isSelected ? const Icon(Icons.check) : null,
+                      onTap: () {
+                        setState(() {
+                          _payerId = memberId;
                         });
                         Navigator.pop(context);
                       },
