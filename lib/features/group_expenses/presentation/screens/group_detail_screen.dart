@@ -2,7 +2,7 @@ import 'package:bill_chillin/core/services/injection_container.dart';
 import 'package:bill_chillin/features/group_expenses/domain/entities/group_entity.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_detail/group_detail_bloc.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_stats_tab.dart';
-import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_transactions_tab.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_expenses_tab.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_bottom_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_members_tab.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_analytics_tab.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final String groupId;
@@ -85,7 +86,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           }
         },
         child: DefaultTabController(
-          length: 3,
+          length: 4,
           child: Scaffold(
             appBar: AppBar(
               title: BlocBuilder<GroupDetailBloc, GroupDetailState>(
@@ -163,8 +164,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               ],
               bottom: const TabBar(
                 tabs: [
-                  Tab(text: "Transactions"),
-                  Tab(text: "Stats & Debts"),
+                  Tab(text: "Expenses"),
+                  Tab(text: "Debts"),
+                  Tab(text: "Analytics"),
                   Tab(text: "Members"),
                 ],
               ),
@@ -178,8 +180,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 } else if (state is GroupDetailLoaded) {
                   return TabBarView(
                     children: [
-                      GroupTransactionsTab(state: state),
+                      GroupExpensesTab(state: state),
                       GroupStatsTab(state: state),
+                      GroupAnalyticsTab(state: state),
                       GroupMembersTab(state: state),
                     ],
                   );
