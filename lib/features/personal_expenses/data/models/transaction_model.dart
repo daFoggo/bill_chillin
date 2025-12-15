@@ -21,6 +21,7 @@ class TransactionModel extends TransactionEntity {
     required super.createdAt,
     super.updatedAt,
     super.groupId,
+    super.groupName,
     super.payerId,
     super.participants,
     super.splitDetails,

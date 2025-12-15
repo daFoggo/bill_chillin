@@ -86,18 +86,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                   ),
                   IconButton(
                     onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (_) => CreateGroupSheet(
-                          currentUserId: currentUserId,
-                          onGroupCreated: (group) {
-                            context.read<GroupListBloc>().add(
-                              CreateNewGroupEvent(group: group),
-                            );
-                          },
-                        ),
-                      );
+                      _showGroupActionSheet(context, currentUserId);
                     },
                     icon: const Icon(Icons.add),
                   ),
@@ -196,6 +185,81 @@ class _GroupListScreenState extends State<GroupListScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showGroupActionSheet(BuildContext context, String currentUserId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.group_add),
+            title: const Text('Create New Group'),
+            onTap: () {
+              Navigator.pop(ctx);
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => CreateGroupSheet(
+                  currentUserId: currentUserId,
+                  onGroupCreated: (group) {
+                    context.read<GroupListBloc>().add(
+                      CreateNewGroupEvent(group: group),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.link),
+            title: const Text('Join Group via Link/Code'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showJoinGroupDialog(context, currentUserId);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  void _showJoinGroupDialog(BuildContext context, String currentUserId) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Join Group"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: "Invite Link or Code",
+            hintText: "Paste the link here",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          FilledButton(
+            onPressed: () {
+              final code = controller.text.trim();
+              if (code.isNotEmpty) {
+                context.read<GroupListBloc>().add(
+                  JoinGroupEvent(inviteCode: code, userId: currentUserId),
+                );
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text("Join"),
+          ),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ class TransactionListWidget extends StatelessWidget {
   final Function(TransactionEntity) onTap;
   final Function(TransactionEntity) onDismissed;
   final Function(TransactionEntity) onLongPress;
+  final bool Function(TransactionEntity)? canDismiss;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
 
@@ -17,6 +18,7 @@ class TransactionListWidget extends StatelessWidget {
     required this.onTap,
     required this.onDismissed,
     required this.onLongPress,
+    this.canDismiss,
     this.shrinkWrap = false,
     this.physics,
   });
@@ -88,14 +90,17 @@ class TransactionListWidget extends StatelessWidget {
               )
             else
               const SizedBox(height: 16),
-            ...weekTransactions.map(
-              (transaction) => TransactionItem(
+            ...weekTransactions.map((transaction) {
+              final isDismissible = canDismiss?.call(transaction) ?? true;
+              return TransactionItem(
                 transaction: transaction,
                 onTap: () => onTap(transaction),
                 onLongPress: () => onLongPress(transaction),
-                onDismissed: (_) => onDismissed(transaction),
-              ),
-            ),
+                onDismissed: isDismissible
+                    ? (_) => onDismissed(transaction)
+                    : null,
+              );
+            }),
           ],
         );
       },

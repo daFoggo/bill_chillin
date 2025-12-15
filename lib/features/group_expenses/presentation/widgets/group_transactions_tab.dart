@@ -101,6 +101,7 @@ class _GroupTransactionsTabState extends State<GroupTransactionsTab>
           child: TransactionBottomSheet(
             userId: user.uid,
             group: widget.state.group,
+            memberDetails: widget.state.memberDetails,
             transaction: tx,
             onSave: (updatedTx) {
               context.read<GroupDetailBloc>().add(

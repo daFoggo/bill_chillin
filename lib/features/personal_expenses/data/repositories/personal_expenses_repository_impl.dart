@@ -5,10 +5,16 @@ import '../../domain/entities/transaction_entity.dart';
 import '../../domain/repositories/personal_expenses_repository.dart';
 import '../datasources/personal_expenses_remote_data_source.dart';
 
+import 'package:bill_chillin/features/group_expenses/data/datasources/group_remote_data_source.dart';
+
 class PersonalExpensesRepositoryImpl implements PersonalExpensesRepository {
   final PersonalExpensesRemoteDataSource remoteDataSource;
+  final GroupRemoteDataSource groupRemoteDataSource;
 
-  PersonalExpensesRepositoryImpl({required this.remoteDataSource});
+  PersonalExpensesRepositoryImpl({
+    required this.remoteDataSource,
+    required this.groupRemoteDataSource,
+  });
 
   @override
   Future<Either<Failure, void>> addTransaction(
@@ -29,8 +35,98 @@ class PersonalExpensesRepositoryImpl implements PersonalExpensesRepository {
     DateTime? toDate,
   }) async {
     try {
-      final result = await remoteDataSource.getTransactions(userId);
-      return Right(result);
+      // 1. Fetch Personal Transactions
+      final personalTransactions = await remoteDataSource.getTransactions(
+        userId,
+      );
+
+      // 2. Fetch Group Transactions
+      List<TransactionEntity> groupTransactionsList = [];
+      try {
+        final groups = await groupRemoteDataSource.getGroups(userId);
+        for (var group in groups) {
+          final gTransactions = await groupRemoteDataSource
+              .getGroupTransactions(group.id);
+
+          // Filter and Transform
+          final relevantTransactions = gTransactions
+              .where((tx) {
+                // Exclude settlements
+                if (tx.type == 'settlement') return false;
+
+                // Must be involved
+                final isPayer = tx.payerId == userId;
+                final isParticipant =
+                    tx.participants?.contains(userId) ?? false;
+
+                return isPayer || isParticipant;
+              })
+              .map((tx) {
+                // Calculate effective amount (My Share)
+                // If I am a participant, my share is explicitly defined in splitDetails
+                // If I am ONLY payer (not participant), then I paid for others, so my expense is 0.
+                // If I am both, I paid effectively for myself + others, but my EXPENSE is just my share.
+
+                final myShare = tx.splitDetails?[userId] ?? 0.0;
+
+                // Create a copy with modified amount to reflect personal expense
+                // We use the same ID, but maybe we should ensure uniqueness?
+                // ID conflict is unlikely unless we use duplicate IDs across collections.
+                // Firestore IDs are usually unique.
+
+                // We return a TransactionEntity (Model extends Entity)
+                return TransactionEntity(
+                  id: tx.id,
+                  userId: tx.userId,
+                  amount: myShare, // Override amount with my share
+                  currency: tx.currency,
+                  type: tx.type,
+                  date: tx.date,
+                  categoryId: tx.categoryId,
+                  categoryName: tx.categoryName,
+                  categoryIcon: tx.categoryIcon,
+                  note: tx.note,
+                  createdAt: tx.createdAt,
+                  updatedAt: tx.updatedAt,
+                  status: tx.status,
+                  groupId: tx.groupId,
+                  groupName: group.name,
+                  payerId: tx.payerId,
+                  participants: tx.participants,
+                  splitDetails: tx.splitDetails,
+                  imageUrl: tx.imageUrl,
+                  searchKeywords: tx.searchKeywords,
+                );
+              })
+              .where(
+                (tx) => tx.amount > 0,
+              ); // Only include if there is a non-zero expense share
+
+          groupTransactionsList.addAll(relevantTransactions);
+        }
+      } catch (e) {
+        // If group fetch fails, just ignore? Or log?
+        // For hybrid, maybe we shouldn't fail everything if groups fail.
+        // But to be safe, let's propagate error or just continue.
+        // Let's print error but continue to return personal ones if mostly network issue?
+        // No, `Left` is safer practice.
+        // But throwing exception inside try-catch block here will be caught by outer catch.
+        // Let's allow partial failure? No, strict consistence is better.
+        // Throwing will be caught by outer block.
+        print('Error fetching group transactions: $e');
+        // We'll proceed with what we have if specific group fails?
+        // Let's rethrow to be safe for now since we want "Hybrid" validity.
+        throw e;
+      }
+
+      // 3. Merge and Sort
+      final allTransactions = [
+        ...personalTransactions,
+        ...groupTransactionsList,
+      ];
+      allTransactions.sort((a, b) => b.date.compareTo(a.date));
+
+      return Right(allTransactions);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

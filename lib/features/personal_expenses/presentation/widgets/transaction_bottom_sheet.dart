@@ -1,3 +1,4 @@
+import 'package:bill_chillin/features/auth/domain/entities/user_entity.dart';
 import 'package:bill_chillin/core/util/thousands_separator_input_formatter.dart';
 import 'package:bill_chillin/core/util/currency_util.dart';
 import 'package:bill_chillin/features/group_expenses/domain/entities/group_entity.dart';
@@ -18,6 +19,7 @@ class TransactionBottomSheet extends StatefulWidget {
   final GroupEntity? group;
   final Function(TransactionEntity) onSave;
   final VoidCallback? onDelete;
+  final Map<String, UserEntity> memberDetails;
 
   const TransactionBottomSheet({
     super.key,
@@ -26,6 +28,7 @@ class TransactionBottomSheet extends StatefulWidget {
     this.group,
     required this.onSave,
     this.onDelete,
+    this.memberDetails = const {},
   });
 
   @override
@@ -193,7 +196,9 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     child: Text(
                       _payerId == widget.userId
                           ? 'You'
-                          : _payerId, // TODO: Map ID to Name
+                          : (widget.memberDetails[_payerId]?.name ??
+                                widget.memberDetails[_payerId]?.email ??
+                                _payerId),
                       style: theme.textTheme.bodyLarge,
                     ),
                   ),
@@ -205,11 +210,24 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     "Split Between (${_selectedParticipants.length})",
                   ),
                   children: widget.group!.members.map((memberId) {
+                    final user = widget.memberDetails[memberId];
                     final displayName = memberId == widget.userId
                         ? 'You'
-                        : memberId;
+                        : (user?.name ?? user?.email ?? memberId);
                     return CheckboxListTile(
                       title: Text(displayName),
+                      secondary: CircleAvatar(
+                        backgroundImage: user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!)
+                            : null,
+                        child: user?.avatarUrl == null
+                            ? Text(
+                                displayName.isEmpty
+                                    ? '?'
+                                    : displayName[0].toUpperCase(),
+                              )
+                            : null,
+                      ),
                       value: _selectedParticipants.contains(memberId),
                       onChanged: (bool? value) {
                         setState(() {
@@ -464,13 +482,23 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                   itemCount: widget.group!.members.length,
                   itemBuilder: (ctx, index) {
                     final memberId = widget.group!.members[index];
+                    final user = widget.memberDetails[memberId];
                     final displayName = memberId == widget.userId
                         ? 'You'
-                        : memberId;
+                        : (user?.name ?? user?.email ?? memberId);
                     final isSelected = memberId == _payerId;
                     return ListTile(
                       leading: CircleAvatar(
-                        child: Text(displayName[0].toUpperCase()),
+                        backgroundImage: user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!)
+                            : null,
+                        child: user?.avatarUrl == null
+                            ? Text(
+                                displayName.isEmpty
+                                    ? '?'
+                                    : displayName[0].toUpperCase(),
+                              )
+                            : null,
                       ),
                       title: Text(displayName),
                       selected: isSelected,

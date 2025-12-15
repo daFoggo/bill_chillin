@@ -5,12 +5,15 @@ import '../../../../personal_expenses/domain/entities/transaction_entity.dart';
 import '../../../domain/entities/debt_entity.dart';
 import '../../../domain/entities/group_entity.dart';
 import '../../../domain/repositories/group_repository.dart';
-import '../../../domain/usecases/calculate_group_debts.dart';
 import '../../../domain/usecases/add_group_transaction_usecase.dart';
+import '../../../domain/usecases/calculate_group_debts.dart';
 import '../../../domain/usecases/delete_group_transaction_usecase.dart';
 import '../../../domain/usecases/delete_group_usecase.dart';
+import '../../../domain/usecases/generate_invite_link_usecase.dart';
 import '../../../domain/usecases/update_group_transaction_usecase.dart';
 import '../../../domain/usecases/update_group_usecase.dart';
+import '../../../../auth/domain/entities/user_entity.dart';
+import '../../../domain/usecases/get_group_member_details_usecase.dart';
 
 part 'group_detail_event.dart';
 part 'group_detail_state.dart';
@@ -18,21 +21,25 @@ part 'group_detail_state.dart';
 class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
   final GroupRepository repository;
   final CalculateGroupDebtsUseCase calculateGroupDebtsUseCase;
+  final GenerateInviteLinkUseCase generateInviteLinkUseCase;
 
   final AddGroupTransactionUseCase addGroupTransactionUseCase;
   final UpdateGroupUseCase updateGroupUseCase;
   final DeleteGroupUseCase deleteGroupUseCase;
   final UpdateGroupTransactionUseCase updateGroupTransactionUseCase;
   final DeleteGroupTransactionUseCase deleteGroupTransactionUseCase;
+  final GetGroupMemberDetailsUseCase getGroupMemberDetailsUseCase;
 
   GroupDetailBloc({
     required this.repository,
     required this.calculateGroupDebtsUseCase,
+    required this.generateInviteLinkUseCase,
     required this.addGroupTransactionUseCase,
     required this.updateGroupUseCase,
     required this.deleteGroupUseCase,
     required this.updateGroupTransactionUseCase,
     required this.deleteGroupTransactionUseCase,
+    required this.getGroupMemberDetailsUseCase,
   }) : super(GroupDetailInitial()) {
     on<LoadGroupDetailEvent>(_onLoadGroupDetail);
     on<ShareGroupLinkEvent>(_onShareGroupLink);
@@ -41,6 +48,17 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     on<DeleteGroupTransactionEvent>(_onDeleteGroupTransaction);
     on<UpdateGroupEvent>(_onUpdateGroup);
     on<DeleteGroupEvent>(_onDeleteGroup);
+    on<ResetGroupLinkEvent>(_onResetGroupLink);
+  }
+
+  void _onResetGroupLink(
+    ResetGroupLinkEvent event,
+    Emitter<GroupDetailState> emit,
+  ) {
+    if (state is GroupDetailLoaded) {
+      final currentState = state as GroupDetailLoaded;
+      emit(currentState.copyWith(clearShareLink: true));
+    }
   }
 
   Future<void> _onUpdateGroupTransaction(
@@ -153,14 +171,28 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
           (failure) async =>
               emit(GroupDetailError(message: failure.toString())),
           (transactions) async {
-            // 3. Calculate Debts
+            // 3. Fetch Member Details
+            final membersResult = await getGroupMemberDetailsUseCase(
+              group.members,
+            );
+            Map<String, UserEntity> memberDetails = {};
+
+            membersResult.fold(
+              (failure) {
+                // Ignore failure, just show IDs
+              },
+              (users) {
+                memberDetails = {for (var u in users) u.id: u};
+              },
+            );
+
+            // 4. Calculate Debts
             final debts = calculateGroupDebtsUseCase(transactions);
 
-            // 4. Calculate Total Expense (Naive sum of all transaction amounts)
-            final totalExpense = transactions.fold(
-              0.0,
-              (sum, tx) => sum + tx.amount,
-            );
+            // 5. Calculate Total Expense (Naive sum of all transaction amounts, excluding settlements)
+            final totalExpense = transactions
+                .where((tx) => tx.type != 'settlement')
+                .fold(0.0, (sum, tx) => sum + tx.amount);
 
             emit(
               GroupDetailLoaded(
@@ -168,6 +200,7 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
                 transactions: transactions,
                 debts: debts,
                 totalExpense: totalExpense,
+                memberDetails: memberDetails,
               ),
             );
           },
@@ -180,7 +213,29 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     ShareGroupLinkEvent event,
     Emitter<GroupDetailState> emit,
   ) async {
-    // TODO: Implement Share Link Logic (Dynamic Links or Clipboard)
-    // For now, assume it's handled in UI or here via a side effect.
+    // Ideally we emit a state with the link, or just trigger a side effect (UI listener)
+    // But since we persist state, we can't easily "return" the link without changing state.
+    // For simplicity, let's assume successful generation triggers a specific state or we just log it/call a callback?
+    // BLoC pattern best practice: Emit a state "GroupLinkGenerated(link)".
+    // But we want to stay "Loaded".
+    // Alternatively, UI calls generating link directly? No, logic should be here.
+
+    // Let's emit GroupDetailLoaded with a "pending message" or similar, or a dedicated "GroupLinkReady" state that extends Loaded?
+    // Or simpler: Emit "GroupLinkGenerated" -> UI shows dialog -> Emit "GroupDetailLoaded" back.
+    // But that causes rebuilds.
+    // Let's use `GroupDetailLoaded` with an optional `showShareLink` field?
+    // Nah, let's keep it simple. We will emit a specific one-off event/state if possible, or just print for now.
+    // Actually, let's emit a specific state for a moment or use a Listener in UI.
+
+    final result = await generateInviteLinkUseCase(event.groupId);
+    result.fold(
+      (failure) => null, // Ignore error for now
+      (link) {
+        if (state is GroupDetailLoaded) {
+          final currentState = state as GroupDetailLoaded;
+          emit(currentState.copyWith(shareLink: link));
+        }
+      },
+    );
   }
 }

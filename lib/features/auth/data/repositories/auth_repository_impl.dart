@@ -75,4 +75,16 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(ServerFailure('Lỗi server'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<UserEntity>>> getUsersByIds(
+    List<String> userIds,
+  ) async {
+    try {
+      final users = await remoteDataSource.getUsersByIds(userIds);
+      return Right(users);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

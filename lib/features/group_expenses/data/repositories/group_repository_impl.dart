@@ -104,6 +104,45 @@ class GroupRepositoryImpl implements GroupRepository {
   }
 
   @override
+  Future<Either<Failure, String>> generateInviteLink(String groupId) async {
+    try {
+      final link = await remoteDataSource.generateInviteLink(groupId);
+      return Right(link);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> joinGroupViaLink(
+    String inviteCode,
+    String userId,
+  ) async {
+    try {
+      // Basic parsing logic: assume code is "billchillin://join/<groupId>"
+      // If it's just the ID, use it directly.
+      String groupId = inviteCode;
+      if (inviteCode.startsWith('https://billchillin.com/app/join/')) {
+        groupId = inviteCode.split('https://billchillin.com/app/join/').last;
+      } else if (inviteCode.startsWith('http://billchillin.com/app/join/')) {
+        groupId = inviteCode.split('http://billchillin.com/app/join/').last;
+      } else if (inviteCode.startsWith('https://example.com/join/')) {
+        groupId = inviteCode.split('https://example.com/join/').last;
+      } else if (inviteCode.startsWith('billchillin://app/join/')) {
+        groupId = inviteCode.split('billchillin://app/join/').last;
+      } else if (inviteCode.startsWith('billchillin://join/')) {
+        // Fallback for old format if any (though deprecated)
+        groupId = inviteCode.split('billchillin://join/').last;
+      }
+
+      await remoteDataSource.joinGroup(groupId, userId);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> addTransaction(
     String groupId,
     TransactionEntity transaction,
