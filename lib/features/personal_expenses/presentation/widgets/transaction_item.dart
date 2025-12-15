@@ -51,79 +51,128 @@ class TransactionItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHigh,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      transaction.categoryIcon.isNotEmpty
-                          ? transaction.categoryIcon
-                          : (isIncome ? '+' : '-'),
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                if (transaction.groupName != null &&
+                    transaction.groupName!.isNotEmpty) ...[
+                  Row(
                     children: [
-                      Text(
-                        (transaction.note != null &&
-                                transaction.note!.isNotEmpty)
-                            ? transaction.note!
-                            : transaction.categoryName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Icon(
+                        Icons.groups_3,
+                        size: 16,
+                        color: theme.colorScheme.primary,
                       ),
-                      if (transaction.note != null &&
-                          transaction.note!.isNotEmpty)
-                        Text(
-                          transaction.categoryName,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        transaction.groupName!,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
                         ),
-                      Builder(
-                        builder: (context) {
-                          final date = transaction.date;
-                          final isMidnight = date.hour == 0 && date.minute == 0;
-
-                          String dateString = DateFormat('dd MMM').format(date);
-                          if (!isMidnight) {
-                            dateString +=
-                                ", ${DateFormat('HH:mm').format(date)}";
-                          }
-
-                          return Text(
-                            dateString,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          );
-                        },
                       ),
                     ],
                   ),
-                ),
-
-                Text(
-                  '${isIncome ? '+' : '-'}${CurrencyUtil.format(transaction.amount)}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: amountColor,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                ],
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: transaction.type == 'settlement'
+                            ? theme.colorScheme.primaryContainer
+                            : theme.colorScheme.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: transaction.type == 'settlement'
+                            ? Icon(
+                                Icons.handshake,
+                                color: theme.colorScheme.onPrimaryContainer,
+                                size: 24,
+                              )
+                            : Text(
+                                transaction.categoryIcon.isNotEmpty
+                                    ? transaction.categoryIcon
+                                    : (isIncome ? '+' : '-'),
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (transaction.note != null &&
+                                    transaction.note!.isNotEmpty)
+                                ? transaction.note!
+                                : transaction.categoryName,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (transaction.note != null &&
+                              transaction.note!.isNotEmpty)
+                            Text(
+                              transaction.categoryName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          Builder(
+                            builder: (context) {
+                              final date = transaction.date;
+                              final isMidnight =
+                                  date.hour == 0 && date.minute == 0;
+
+                              String dateString = DateFormat(
+                                'dd MMM',
+                              ).format(date);
+                              if (!isMidnight) {
+                                dateString +=
+                                    ", ${DateFormat('HH:mm').format(date)}";
+                              }
+
+                              return Text(
+                                dateString,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Text(
+                      transaction.type == 'settlement'
+                          ? CurrencyUtil.format(transaction.amount)
+                          : '${isIncome ? '+' : '-'}${CurrencyUtil.format(transaction.amount)}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: transaction.type == 'settlement'
+                            ? theme.colorScheme.primary
+                            : amountColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -1,4 +1,6 @@
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_detail/group_detail_bloc.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_debts_list.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_stats_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -33,102 +35,21 @@ class GroupStatsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // My Summary Card
-          Card(
-            elevation: 0,
-            color: Theme.of(context).colorScheme.primaryContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
-                    "My Net Balance",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "${netBalance >= 0 ? '+' : ''}${netBalance.toStringAsFixed(0)}",
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: netBalance >= 0
-                          ? Colors.green
-                          : theme.colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          const Text("I Owe"),
-                          Text(
-                            iOwe.toStringAsFixed(0),
-                            style: TextStyle(
-                              color: theme.colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          const Text("Owed to Me"),
-                          Text(
-                            owedToMe.toStringAsFixed(0),
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          GroupStatsCard(
+            netBalance: netBalance,
+            iOwe: iOwe,
+            owedToMe: owedToMe,
           ),
           const SizedBox(height: 24),
           Text(
             "All Group Debts",
-            style: Theme.of(context).textTheme.titleLarge,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 8),
-          if (state.debts.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("All squared up! No debts."),
-              ),
-            )
-          else
-            ...state.debts.map((debt) {
-              final fromUser = state.memberDetails[debt.fromUser];
-              final toUser = state.memberDetails[debt.toUser];
-              final fromName = debt.fromUser == userId
-                  ? 'You'
-                  : (fromUser?.name ?? 'Unknown');
-              final toName = debt.toUser == userId
-                  ? 'You'
-                  : (toUser?.name ?? 'Unknown');
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: fromUser?.avatarUrl != null
-                      ? NetworkImage(fromUser!.avatarUrl!)
-                      : null,
-                  child: fromUser?.avatarUrl == null
-                      ? const Icon(Icons.person)
-                      : null,
-                ),
-                title: Text("$fromName owes $toName"),
-                trailing: Text(
-                  debt.amount.toStringAsFixed(0),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              );
-            }),
+          const SizedBox(height: 16),
+          GroupDebtsList(state: state, userId: userId),
+          const SizedBox(height: 32),
         ],
       ),
     );

@@ -189,11 +189,10 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
             // 4. Calculate Debts
             final debts = calculateGroupDebtsUseCase(transactions);
 
-            // 5. Calculate Total Expense (Naive sum of all transaction amounts)
-            final totalExpense = transactions.fold(
-              0.0,
-              (sum, tx) => sum + tx.amount,
-            );
+            // 5. Calculate Total Expense (Naive sum of all transaction amounts, excluding settlements)
+            final totalExpense = transactions
+                .where((tx) => tx.type != 'settlement')
+                .fold(0.0, (sum, tx) => sum + tx.amount);
 
             emit(
               GroupDetailLoaded(

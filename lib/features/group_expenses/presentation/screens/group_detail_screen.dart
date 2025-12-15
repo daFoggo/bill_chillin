@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:bill_chillin/features/group_expenses/presentation/widgets/group_members_tab.dart';
+
 class GroupDetailScreen extends StatefulWidget {
   final String groupId;
   final String groupName;
@@ -17,7 +19,7 @@ class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.groupId,
-    required this.groupName,
+    this.groupName = 'Group Details',
   });
 
   @override
@@ -83,7 +85,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           }
         },
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: Scaffold(
             appBar: AppBar(
               title: BlocBuilder<GroupDetailBloc, GroupDetailState>(
@@ -163,6 +165,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 tabs: [
                   Tab(text: "Transactions"),
                   Tab(text: "Stats & Debts"),
+                  Tab(text: "Members"),
                 ],
               ),
             ),
@@ -177,6 +180,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     children: [
                       GroupTransactionsTab(state: state),
                       GroupStatsTab(state: state),
+                      GroupMembersTab(state: state),
                     ],
                   );
                 }

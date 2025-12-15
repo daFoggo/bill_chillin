@@ -196,7 +196,9 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     child: Text(
                       _payerId == widget.userId
                           ? 'You'
-                          : (widget.memberDetails[_payerId]?.name ?? _payerId),
+                          : (widget.memberDetails[_payerId]?.name ??
+                                widget.memberDetails[_payerId]?.email ??
+                                _payerId),
                       style: theme.textTheme.bodyLarge,
                     ),
                   ),
@@ -211,7 +213,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     final user = widget.memberDetails[memberId];
                     final displayName = memberId == widget.userId
                         ? 'You'
-                        : (user?.name ?? memberId);
+                        : (user?.name ?? user?.email ?? memberId);
                     return CheckboxListTile(
                       title: Text(displayName),
                       secondary: CircleAvatar(
@@ -483,7 +485,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     final user = widget.memberDetails[memberId];
                     final displayName = memberId == widget.userId
                         ? 'You'
-                        : (user?.name ?? memberId);
+                        : (user?.name ?? user?.email ?? memberId);
                     final isSelected = memberId == _payerId;
                     return ListTile(
                       leading: CircleAvatar(

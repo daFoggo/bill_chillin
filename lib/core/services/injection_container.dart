@@ -72,7 +72,10 @@ Future<void> init() async {
   );
   // Repository
   sl.registerLazySingleton<PersonalExpensesRepository>(
-    () => PersonalExpensesRepositoryImpl(remoteDataSource: sl()),
+    () => PersonalExpensesRepositoryImpl(
+      remoteDataSource: sl(),
+      groupRemoteDataSource: sl(),
+    ),
   );
   // Bloc
   sl.registerFactory<PersonalExpensesBloc>(

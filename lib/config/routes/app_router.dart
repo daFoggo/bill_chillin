@@ -5,6 +5,7 @@ import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bill_chillin/features/auth/presentation/pages/auth_page.dart';
 import 'package:bill_chillin/features/main/presentation/pages/main_screen.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/pages/join_group_page.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/screens/group_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,6 +33,14 @@ class AppRouter {
         builder: (context, state) {
           final groupId = state.pathParameters['groupId']!;
           return JoinGroupPage(groupId: groupId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.groupDetail,
+        name: 'group_detail',
+        builder: (context, state) {
+          final groupId = state.pathParameters['groupId']!;
+          return GroupDetailScreen(groupId: groupId);
         },
       ),
     ],

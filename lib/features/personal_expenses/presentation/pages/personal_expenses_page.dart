@@ -11,6 +11,7 @@ import 'package:bill_chillin/features/personal_expenses/presentation/widgets/tra
 import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class PersonalExpensesPage extends StatelessWidget {
   const PersonalExpensesPage({super.key});
@@ -254,12 +255,22 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
                   Expanded(
                     child: TransactionListWidget(
                       transactions: transactions,
-                      onTap: (transaction) =>
+                      canDismiss: (transaction) => transaction.groupId == null,
+                      onTap: (transaction) {
+                        if (transaction.groupId != null) {
+                          context.pushNamed(
+                            'group_detail',
+                            pathParameters: {'groupId': transaction.groupId!},
+                          );
+                        } else {
                           PersonalExpensesPage.showTransactionBottomSheet(
                             context,
                             transaction: transaction,
-                          ),
+                          );
+                        }
+                      },
                       onDismissed: (transaction) {
+                        if (transaction.groupId != null) return;
                         final userId = transaction.userId;
                         context.read<PersonalExpensesBloc>().add(
                           DeleteTransactionEvent(transaction.id, userId),

@@ -15,9 +15,9 @@ class UserModel extends UserEntity {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return UserModel(
       id: doc.id,
-      email: data['email'],
-      name: data['name'],
-      avatarUrl: data['avatarUrl'],
+      email: data['email'] ?? '',
+      name: data['name'] ?? data['displayName'],
+      avatarUrl: data['avatarUrl'] ?? data['photoUrl'] ?? data['photoURL'],
     );
   }
 

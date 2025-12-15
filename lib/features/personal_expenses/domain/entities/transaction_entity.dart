@@ -24,6 +24,7 @@ class TransactionEntity extends Equatable {
 
   // Group Expense Fields
   final String? groupId;
+  final String? groupName;
   final String? payerId;
   final List<String>? participants;
   final Map<String, double>? splitDetails;
@@ -45,6 +46,7 @@ class TransactionEntity extends Equatable {
     required this.createdAt,
     this.updatedAt,
     this.groupId,
+    this.groupName,
     this.payerId,
     this.participants,
     this.splitDetails,
@@ -68,6 +70,7 @@ class TransactionEntity extends Equatable {
     createdAt,
     updatedAt,
     groupId,
+    groupName,
     payerId,
     participants,
     splitDetails,
