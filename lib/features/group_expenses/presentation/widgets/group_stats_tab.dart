@@ -103,20 +103,32 @@ class GroupStatsTab extends StatelessWidget {
               ),
             )
           else
-            ...state.debts.map(
-              (debt) => ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.person),
-                ), // Placeholder for avatar
-                title: Text(
-                  "${debt.fromUser} owes ${debt.toUser}",
-                ), // Needs name resolution
+            ...state.debts.map((debt) {
+              final fromUser = state.memberDetails[debt.fromUser];
+              final toUser = state.memberDetails[debt.toUser];
+              final fromName = debt.fromUser == userId
+                  ? 'You'
+                  : (fromUser?.name ?? 'Unknown');
+              final toName = debt.toUser == userId
+                  ? 'You'
+                  : (toUser?.name ?? 'Unknown');
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: fromUser?.avatarUrl != null
+                      ? NetworkImage(fromUser!.avatarUrl!)
+                      : null,
+                  child: fromUser?.avatarUrl == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                title: Text("$fromName owes $toName"),
                 trailing: Text(
                   debt.amount.toStringAsFixed(0),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
-            ),
+              );
+            }),
         ],
       ),
     );

@@ -12,6 +12,8 @@ import '../../../domain/usecases/delete_group_usecase.dart';
 import '../../../domain/usecases/generate_invite_link_usecase.dart';
 import '../../../domain/usecases/update_group_transaction_usecase.dart';
 import '../../../domain/usecases/update_group_usecase.dart';
+import '../../../../auth/domain/entities/user_entity.dart';
+import '../../../domain/usecases/get_group_member_details_usecase.dart';
 
 part 'group_detail_event.dart';
 part 'group_detail_state.dart';
@@ -26,6 +28,7 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
   final DeleteGroupUseCase deleteGroupUseCase;
   final UpdateGroupTransactionUseCase updateGroupTransactionUseCase;
   final DeleteGroupTransactionUseCase deleteGroupTransactionUseCase;
+  final GetGroupMemberDetailsUseCase getGroupMemberDetailsUseCase;
 
   GroupDetailBloc({
     required this.repository,
@@ -36,6 +39,7 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     required this.deleteGroupUseCase,
     required this.updateGroupTransactionUseCase,
     required this.deleteGroupTransactionUseCase,
+    required this.getGroupMemberDetailsUseCase,
   }) : super(GroupDetailInitial()) {
     on<LoadGroupDetailEvent>(_onLoadGroupDetail);
     on<ShareGroupLinkEvent>(_onShareGroupLink);
@@ -167,10 +171,25 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
           (failure) async =>
               emit(GroupDetailError(message: failure.toString())),
           (transactions) async {
-            // 3. Calculate Debts
+            // 3. Fetch Member Details
+            final membersResult = await getGroupMemberDetailsUseCase(
+              group.members,
+            );
+            Map<String, UserEntity> memberDetails = {};
+
+            membersResult.fold(
+              (failure) {
+                // Ignore failure, just show IDs
+              },
+              (users) {
+                memberDetails = {for (var u in users) u.id: u};
+              },
+            );
+
+            // 4. Calculate Debts
             final debts = calculateGroupDebtsUseCase(transactions);
 
-            // 4. Calculate Total Expense (Naive sum of all transaction amounts)
+            // 5. Calculate Total Expense (Naive sum of all transaction amounts)
             final totalExpense = transactions.fold(
               0.0,
               (sum, tx) => sum + tx.amount,
@@ -182,6 +201,7 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
                 transactions: transactions,
                 debts: debts,
                 totalExpense: totalExpense,
+                memberDetails: memberDetails,
               ),
             );
           },

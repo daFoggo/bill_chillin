@@ -126,6 +126,8 @@ class GroupRepositoryImpl implements GroupRepository {
         groupId = inviteCode.split('https://billchillin.com/app/join/').last;
       } else if (inviteCode.startsWith('http://billchillin.com/app/join/')) {
         groupId = inviteCode.split('http://billchillin.com/app/join/').last;
+      } else if (inviteCode.startsWith('https://example.com/join/')) {
+        groupId = inviteCode.split('https://example.com/join/').last;
       } else if (inviteCode.startsWith('billchillin://app/join/')) {
         groupId = inviteCode.split('billchillin://app/join/').last;
       } else if (inviteCode.startsWith('billchillin://join/')) {

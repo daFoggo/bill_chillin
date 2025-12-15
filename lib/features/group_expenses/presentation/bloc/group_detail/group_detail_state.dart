@@ -17,6 +17,7 @@ class GroupDetailLoaded extends GroupDetailState {
   final List<DebtEntity> debts;
   final double totalExpense;
   final String? shareLink;
+  final Map<String, UserEntity> memberDetails;
 
   const GroupDetailLoaded({
     required this.group,
@@ -24,6 +25,7 @@ class GroupDetailLoaded extends GroupDetailState {
     required this.debts,
     required this.totalExpense,
     this.shareLink,
+    this.memberDetails = const {},
   });
 
   @override

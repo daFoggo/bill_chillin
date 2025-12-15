@@ -18,4 +18,6 @@ abstract class AuthRepository {
   Future<Either<Failure, void>> signOut();
 
   Future<Either<Failure, UserEntity>> getCurrentUser();
+
+  Future<Either<Failure, List<UserEntity>>> getUsersByIds(List<String> userIds);
 }

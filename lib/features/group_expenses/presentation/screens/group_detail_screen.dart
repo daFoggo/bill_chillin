@@ -206,6 +206,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                                 child: TransactionBottomSheet(
                                   userId: user.uid,
                                   group: state.group,
+                                  memberDetails: state.memberDetails,
                                   onSave: (transaction) {
                                     context.read<GroupDetailBloc>().add(
                                       AddGroupTransactionEvent(

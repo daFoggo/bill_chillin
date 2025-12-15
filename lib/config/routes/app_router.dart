@@ -40,7 +40,7 @@ class AppRouter {
       final isAuthenticated = authState is AuthAuthenticated;
 
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
-      final isJoinGroup = state.matchedLocation.startsWith('/join');
+      final isJoinGroup = state.matchedLocation.startsWith('/app/join');
 
       if (!isAuthenticated) {
         if (isJoinGroup) return null;
