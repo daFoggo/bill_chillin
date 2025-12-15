@@ -32,4 +32,26 @@ class GroupEntity extends Equatable {
     imageUrl,
     searchKeywords,
   ];
+
+  GroupEntity copyWith({
+    String? id,
+    String? name,
+    List<String>? members,
+    String? currency,
+    String? createdBy,
+    DateTime? createdAt,
+    String? imageUrl,
+    List<String>? searchKeywords,
+  }) {
+    return GroupEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      members: members ?? this.members,
+      currency: currency ?? this.currency,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      imageUrl: imageUrl ?? this.imageUrl,
+      searchKeywords: searchKeywords ?? this.searchKeywords,
+    );
+  }
 }

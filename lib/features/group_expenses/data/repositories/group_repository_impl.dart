@@ -75,6 +75,35 @@ class GroupRepositoryImpl implements GroupRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updateGroup(GroupEntity group) async {
+    try {
+      final groupModel = GroupModel(
+        id: group.id,
+        name: group.name,
+        members: group.members,
+        currency: group.currency,
+        createdBy: group.createdBy,
+        createdAt: group.createdAt,
+        imageUrl: group.imageUrl,
+      );
+      await remoteDataSource.updateGroup(groupModel);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteGroup(String groupId) async {
+    try {
+      await remoteDataSource.deleteGroup(groupId);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> addTransaction(
     String groupId,
     TransactionEntity transaction,
@@ -102,6 +131,53 @@ class GroupRepositoryImpl implements GroupRepository {
         splitDetails: transaction.splitDetails,
       );
       await remoteDataSource.addTransaction(groupId, transactionModel);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateTransaction(
+    String groupId,
+    TransactionEntity transaction,
+  ) async {
+    try {
+      final transactionModel = TransactionModel(
+        id: transaction.id,
+        userId: transaction.userId,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        type: transaction.type,
+        date: transaction.date,
+        categoryId: transaction.categoryId,
+        categoryName: transaction.categoryName,
+        categoryIcon: transaction.categoryIcon,
+        note: transaction.note,
+        searchKeywords: transaction.searchKeywords,
+        status: transaction.status,
+        imageUrl: transaction.imageUrl,
+        createdAt: transaction.createdAt,
+        updatedAt: transaction.updatedAt,
+        groupId: transaction.groupId,
+        payerId: transaction.payerId,
+        participants: transaction.participants,
+        splitDetails: transaction.splitDetails,
+      );
+      await remoteDataSource.updateTransaction(groupId, transactionModel);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteTransaction(
+    String groupId,
+    String transactionId,
+  ) async {
+    try {
+      await remoteDataSource.deleteTransaction(groupId, transactionId);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

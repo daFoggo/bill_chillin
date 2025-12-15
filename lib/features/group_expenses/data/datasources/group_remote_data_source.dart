@@ -10,8 +10,13 @@ abstract class GroupRemoteDataSource {
   Future<void> joinGroup(String groupId, String userId);
   Future<void> leaveGroup(String groupId, String userId);
 
+  Future<void> updateGroup(GroupModel group);
+  Future<void> deleteGroup(String groupId);
+
   // Group Transactions
   Future<void> addTransaction(String groupId, TransactionModel transaction);
+  Future<void> updateTransaction(String groupId, TransactionModel transaction);
+  Future<void> deleteTransaction(String groupId, String transactionId);
   Future<List<TransactionModel>> getGroupTransactions(String groupId);
 }
 
@@ -84,6 +89,27 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
   }
 
   @override
+  Future<void> updateGroup(GroupModel group) async {
+    try {
+      await firestore
+          .collection('groups')
+          .doc(group.id)
+          .update(group.toDocument());
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteGroup(String groupId) async {
+    try {
+      await firestore.collection('groups').doc(groupId).delete();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
   Future<void> addTransaction(
     String groupId,
     TransactionModel transaction,
@@ -95,6 +121,37 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
           .collection('transactions')
           .doc(transaction.id)
           .set(transaction.toDocument());
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateTransaction(
+    String groupId,
+    TransactionModel transaction,
+  ) async {
+    try {
+      await firestore
+          .collection('groups')
+          .doc(groupId)
+          .collection('transactions')
+          .doc(transaction.id)
+          .update(transaction.toDocument());
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteTransaction(String groupId, String transactionId) async {
+    try {
+      await firestore
+          .collection('groups')
+          .doc(groupId)
+          .collection('transactions')
+          .doc(transactionId)
+          .delete();
     } catch (e) {
       throw ServerException(e.toString());
     }

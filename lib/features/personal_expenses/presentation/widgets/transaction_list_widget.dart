@@ -8,6 +8,8 @@ class TransactionListWidget extends StatelessWidget {
   final Function(TransactionEntity) onTap;
   final Function(TransactionEntity) onDismissed;
   final Function(TransactionEntity) onLongPress;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
   const TransactionListWidget({
     super.key,
@@ -15,6 +17,8 @@ class TransactionListWidget extends StatelessWidget {
     required this.onTap,
     required this.onDismissed,
     required this.onLongPress,
+    this.shrinkWrap = false,
+    this.physics,
   });
 
   @override
@@ -41,6 +45,8 @@ class TransactionListWidget extends StatelessWidget {
     }
 
     return ListView.builder(
+      shrinkWrap: shrinkWrap,
+      physics: physics,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: groupedTransactions.length,
       itemBuilder: (context, index) {

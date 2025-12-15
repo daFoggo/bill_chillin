@@ -11,10 +11,21 @@ abstract class GroupRepository {
   Future<Either<Failure, void>> joinGroup(String groupId, String userId);
   Future<Either<Failure, void>> leaveGroup(String groupId, String userId);
 
+  Future<Either<Failure, void>> updateGroup(GroupEntity group);
+  Future<Either<Failure, void>> deleteGroup(String groupId);
+
   // Group Transactions
   Future<Either<Failure, void>> addTransaction(
     String groupId,
     TransactionEntity transaction,
+  );
+  Future<Either<Failure, void>> updateTransaction(
+    String groupId,
+    TransactionEntity transaction,
+  );
+  Future<Either<Failure, void>> deleteTransaction(
+    String groupId,
+    String transactionId,
   );
   Future<Either<Failure, List<TransactionEntity>>> getGroupTransactions(
     String groupId,

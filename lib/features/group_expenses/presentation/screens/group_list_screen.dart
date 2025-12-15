@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/injection_container.dart';
 import '../bloc/group_list/group_list_bloc.dart';
 import '../widgets/create_group_sheet.dart';
+import 'group_detail_screen.dart';
 
 class GroupListScreen extends StatefulWidget {
   const GroupListScreen({super.key});
@@ -166,7 +167,23 @@ class _GroupListScreenState extends State<GroupListScreen> {
                             size: 16,
                             color: Colors.grey,
                           ),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => GroupDetailScreen(
+                                  groupId: group.id,
+                                  groupName: group.name,
+                                ),
+                              ),
+                            ).then((_) {
+                              if (context.mounted) {
+                                context.read<GroupListBloc>().add(
+                                  LoadGroupsEvent(userId: currentUserId),
+                                );
+                              }
+                            });
+                          },
                         ),
                       );
                     },

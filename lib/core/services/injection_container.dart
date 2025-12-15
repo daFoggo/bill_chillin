@@ -20,6 +20,12 @@ import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_d
 import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_transactions_usecase.dart';
 import 'package:bill_chillin/features/group_expenses/domain/usecases/join_group_usecase.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_list/group_list_bloc.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_detail/group_detail_bloc.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/calculate_group_debts.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/delete_group_transaction_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/delete_group_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/update_group_transaction_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/update_group_usecase.dart';
 import 'package:bill_chillin/features/home/presentation/bloc/home_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -102,9 +108,25 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddGroupTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetGroupTransactionsUseCase(sl()));
   sl.registerLazySingleton(() => GetGroupDebtsUseCase(sl()));
+  sl.registerLazySingleton(() => CalculateGroupDebtsUseCase());
+  sl.registerLazySingleton(() => UpdateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteGroupUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateGroupTransactionUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteGroupTransactionUseCase(sl()));
 
   // Blocs
   sl.registerFactory<GroupListBloc>(
     () => GroupListBloc(repository: sl(), createGroupUseCase: sl()),
+  );
+  sl.registerFactory<GroupDetailBloc>(
+    () => GroupDetailBloc(
+      repository: sl(),
+      calculateGroupDebtsUseCase: sl(),
+      addGroupTransactionUseCase: sl(),
+      updateGroupUseCase: sl(),
+      deleteGroupUseCase: sl(),
+      updateGroupTransactionUseCase: sl(),
+      deleteGroupTransactionUseCase: sl(),
+    ),
   );
 }

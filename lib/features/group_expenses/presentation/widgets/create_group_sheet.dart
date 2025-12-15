@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/entities/group_entity.dart';
 
@@ -48,27 +49,40 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
             autofocus: true,
           ),
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () {
-              if (_nameController.text.isNotEmpty) {
-                final newGroup = GroupEntity(
-                  id: const Uuid().v4(),
-                  name: _nameController.text,
-                  members: [widget.currentUserId],
-                  createdBy: widget.currentUserId,
-                  createdAt: DateTime.now(),
-                  currency: _currency,
-                  searchKeywords: const [],
-                );
-                widget.onGroupCreated(newGroup);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Create'),
-          ),
+          FilledButton(onPressed: _createGroup, child: const Text('Create')),
           const SizedBox(height: 16),
         ],
       ),
     );
+  }
+
+  void _createGroup() {
+    if (_nameController.text.isNotEmpty) {
+      final groupId = const Uuid().v4();
+      final newGroup = GroupEntity(
+        id: groupId,
+        name: _nameController.text,
+        members: [widget.currentUserId],
+        createdBy: widget.currentUserId,
+        createdAt: DateTime.now(),
+        currency: _currency,
+        searchKeywords: const [],
+      );
+
+      // Auto copy link
+      final link = 'https://billchillin.app/group/join?id=$groupId';
+      Clipboard.setData(ClipboardData(text: link)).then((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Group created! Invite link copied to clipboard.'),
+            ),
+          );
+        }
+      });
+
+      widget.onGroupCreated(newGroup);
+      Navigator.pop(context);
+    }
   }
 }
