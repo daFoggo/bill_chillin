@@ -10,6 +10,13 @@ import 'package:bill_chillin/features/personal_expenses/data/datasources/categor
 import 'package:bill_chillin/features/personal_expenses/data/repositories/category_repository_impl.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/repositories/category_repository.dart';
 import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
+
+import 'package:bill_chillin/features/group_expenses/data/datasources/group_remote_data_source.dart';
+import 'package:bill_chillin/features/group_expenses/data/repositories/group_repository_impl.dart';
+import 'package:bill_chillin/features/group_expenses/domain/repositories/group_repository.dart';
+import 'package:bill_chillin/features/group_expenses/data/datasources/group_expense_remote_data_source.dart';
+import 'package:bill_chillin/features/group_expenses/data/repositories/group_expense_repository_impl.dart';
+import 'package:bill_chillin/features/group_expenses/domain/repositories/group_expense_repository.dart';
 import 'package:bill_chillin/features/home/presentation/bloc/home_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -75,4 +82,21 @@ Future<void> init() async {
 
   //! 5. Feature: Home
   sl.registerFactory<HomeBloc>(() => HomeBloc(repository: sl()));
+
+  //! 6. Feature: Group Expenses
+  // Group Manage
+  sl.registerLazySingleton<GroupRemoteDataSource>(
+    () => GroupRemoteDataSourceImpl(firestore: sl()),
+  );
+  sl.registerLazySingleton<GroupRepository>(
+    () => GroupRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Group Transactions
+  sl.registerLazySingleton<GroupExpenseRemoteDataSource>(
+    () => GroupExpenseRemoteDataSourceImpl(firestore: sl()),
+  );
+  sl.registerLazySingleton<GroupExpenseRepository>(
+    () => GroupExpenseRepositoryImpl(remoteDataSource: sl()),
+  );
 }

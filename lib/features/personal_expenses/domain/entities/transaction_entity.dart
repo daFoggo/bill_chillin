@@ -22,6 +22,12 @@ class TransactionEntity extends Equatable {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  // Group Expense Fields
+  final String? groupId;
+  final String? payerId;
+  final List<String>? participants;
+  final Map<String, double>? splitDetails;
+
   const TransactionEntity({
     required this.id,
     required this.userId,
@@ -38,6 +44,10 @@ class TransactionEntity extends Equatable {
     this.imageUrl,
     required this.createdAt,
     this.updatedAt,
+    this.groupId,
+    this.payerId,
+    this.participants,
+    this.splitDetails,
   });
 
   @override
@@ -57,5 +67,9 @@ class TransactionEntity extends Equatable {
     imageUrl,
     createdAt,
     updatedAt,
+    groupId,
+    payerId,
+    participants,
+    splitDetails,
   ];
 }

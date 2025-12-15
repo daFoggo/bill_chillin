@@ -20,6 +20,10 @@ class TransactionModel extends TransactionEntity {
     super.imageUrl,
     required super.createdAt,
     super.updatedAt,
+    super.groupId,
+    super.payerId,
+    super.participants,
+    super.splitDetails,
   });
 
   factory TransactionModel.fromFirestore(DocumentSnapshot doc) {
@@ -46,6 +50,19 @@ class TransactionModel extends TransactionEntity {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+
+      groupId: data['groupId'],
+      payerId: data['payerId'],
+      participants: data['participants'] != null
+          ? List<String>.from(data['participants'])
+          : null,
+      splitDetails: data['splitDetails'] != null
+          ? Map<String, double>.from(
+              data['splitDetails'].map(
+                (k, v) => MapEntry(k, (v as num).toDouble()),
+              ),
+            )
           : null,
     );
   }
@@ -75,6 +92,11 @@ class TransactionModel extends TransactionEntity {
       'updatedAt': updatedAt != null
           ? Timestamp.fromDate(updatedAt!)
           : FieldValue.serverTimestamp(),
+
+      'groupId': groupId,
+      'payerId': payerId,
+      'participants': participants,
+      'splitDetails': splitDetails,
     };
   }
 }
