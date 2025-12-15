@@ -8,6 +8,7 @@ class GroupEntity extends Equatable {
   final String createdBy;
   final DateTime createdAt;
   final String? imageUrl;
+  final List<String> searchKeywords;
 
   const GroupEntity({
     required this.id,
@@ -17,6 +18,7 @@ class GroupEntity extends Equatable {
     required this.createdBy,
     required this.createdAt,
     this.imageUrl,
+    this.searchKeywords = const [],
   });
 
   @override
@@ -28,5 +30,6 @@ class GroupEntity extends Equatable {
     createdBy,
     createdAt,
     imageUrl,
+    searchKeywords,
   ];
 }

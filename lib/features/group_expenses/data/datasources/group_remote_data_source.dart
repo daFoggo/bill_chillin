@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../personal_expenses/data/models/transaction_model.dart';
 import '../models/group_model.dart';
 
 abstract class GroupRemoteDataSource {
@@ -8,6 +9,10 @@ abstract class GroupRemoteDataSource {
   Future<GroupModel> getGroupDetails(String groupId);
   Future<void> joinGroup(String groupId, String userId);
   Future<void> leaveGroup(String groupId, String userId);
+
+  // Group Transactions
+  Future<void> addTransaction(String groupId, TransactionModel transaction);
+  Future<List<TransactionModel>> getGroupTransactions(String groupId);
 }
 
 class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
@@ -73,6 +78,40 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
       await firestore.collection('groups').doc(groupId).update({
         'members': FieldValue.arrayRemove([userId]),
       });
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> addTransaction(
+    String groupId,
+    TransactionModel transaction,
+  ) async {
+    try {
+      await firestore
+          .collection('groups')
+          .doc(groupId)
+          .collection('transactions')
+          .doc(transaction.id)
+          .set(transaction.toDocument());
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<TransactionModel>> getGroupTransactions(String groupId) async {
+    try {
+      final querySnapshot = await firestore
+          .collection('groups')
+          .doc(groupId)
+          .collection('transactions')
+          .orderBy('date', descending: true)
+          .get();
+      return querySnapshot.docs
+          .map((doc) => TransactionModel.fromFirestore(doc))
+          .toList();
     } catch (e) {
       throw ServerException(e.toString());
     }

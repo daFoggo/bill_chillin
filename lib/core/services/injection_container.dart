@@ -14,9 +14,12 @@ import 'package:bill_chillin/features/personal_expenses/presentation/bloc/catego
 import 'package:bill_chillin/features/group_expenses/data/datasources/group_remote_data_source.dart';
 import 'package:bill_chillin/features/group_expenses/data/repositories/group_repository_impl.dart';
 import 'package:bill_chillin/features/group_expenses/domain/repositories/group_repository.dart';
-import 'package:bill_chillin/features/group_expenses/data/datasources/group_expense_remote_data_source.dart';
-import 'package:bill_chillin/features/group_expenses/data/repositories/group_expense_repository_impl.dart';
-import 'package:bill_chillin/features/group_expenses/domain/repositories/group_expense_repository.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/add_group_transaction_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/create_group_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_debts_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_transactions_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/domain/usecases/join_group_usecase.dart';
+import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_list/group_list_bloc.dart';
 import 'package:bill_chillin/features/home/presentation/bloc/home_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -84,19 +87,24 @@ Future<void> init() async {
   sl.registerFactory<HomeBloc>(() => HomeBloc(repository: sl()));
 
   //! 6. Feature: Group Expenses
-  // Group Manage
+  // Data Source
   sl.registerLazySingleton<GroupRemoteDataSource>(
     () => GroupRemoteDataSourceImpl(firestore: sl()),
   );
+  // Repository
   sl.registerLazySingleton<GroupRepository>(
     () => GroupRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Group Transactions
-  sl.registerLazySingleton<GroupExpenseRemoteDataSource>(
-    () => GroupExpenseRemoteDataSourceImpl(firestore: sl()),
-  );
-  sl.registerLazySingleton<GroupExpenseRepository>(
-    () => GroupExpenseRepositoryImpl(remoteDataSource: sl()),
+  // UseCases
+  sl.registerLazySingleton(() => CreateGroupUseCase(sl()));
+  sl.registerLazySingleton(() => JoinGroupUseCase(sl()));
+  sl.registerLazySingleton(() => AddGroupTransactionUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupTransactionsUseCase(sl()));
+  sl.registerLazySingleton(() => GetGroupDebtsUseCase(sl()));
+
+  // Blocs
+  sl.registerFactory<GroupListBloc>(
+    () => GroupListBloc(repository: sl(), createGroupUseCase: sl()),
   );
 }
