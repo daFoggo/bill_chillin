@@ -170,7 +170,7 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
               child: SearchBar(
                 controller: _searchController,
                 hintText: "Search transactions...",
-                hintStyle: MaterialStateProperty.all(
+                hintStyle: WidgetStateProperty.all(
                   Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -179,8 +179,8 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
                   Icons.search,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                elevation: MaterialStateProperty.all(0),
-                backgroundColor: MaterialStateProperty.all(
+                elevation: WidgetStateProperty.all(0),
+                backgroundColor: WidgetStateProperty.all(
                   Theme.of(context).colorScheme.surfaceContainerHigh,
                 ),
                 onChanged: (query) {

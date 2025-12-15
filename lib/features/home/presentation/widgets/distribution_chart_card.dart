@@ -72,18 +72,18 @@ class _DistributionChartCardState extends State<DistributionChartCard> {
                   style: ButtonStyle(
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>((
-                      Set<MaterialState> states,
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                      Set<WidgetState> states,
                     ) {
-                      if (states.contains(MaterialState.selected)) {
+                      if (states.contains(WidgetState.selected)) {
                         return theme.colorScheme.primary;
                       }
                       return theme.colorScheme.secondaryContainer;
                     }),
-                    foregroundColor: MaterialStateProperty.resolveWith<Color>((
-                      Set<MaterialState> states,
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                      Set<WidgetState> states,
                     ) {
-                      if (states.contains(MaterialState.selected)) {
+                      if (states.contains(WidgetState.selected)) {
                         return theme.colorScheme.onPrimary;
                       }
                       return theme.colorScheme.onSurface;
