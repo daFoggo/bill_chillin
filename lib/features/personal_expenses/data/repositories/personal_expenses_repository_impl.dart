@@ -116,7 +116,7 @@ class PersonalExpensesRepositoryImpl implements PersonalExpensesRepository {
         print('Error fetching group transactions: $e');
         // We'll proceed with what we have if specific group fails?
         // Let's rethrow to be safe for now since we want "Hybrid" validity.
-        throw e;
+        rethrow;
       }
 
       // 3. Merge and Sort

@@ -4,6 +4,9 @@ import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
 import 'package:bill_chillin/features/auth/presentation/pages/auth_page.dart';
 import 'package:bill_chillin/features/main/presentation/pages/main_screen.dart';
+import 'package:bill_chillin/features/scan/domain/entities/scanned_transaction.dart';
+import 'package:bill_chillin/features/scan/presentation/pages/scan_receipt_page.dart';
+import 'package:bill_chillin/features/scan/presentation/pages/review_scanned_transactions_page.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/pages/join_group_page.dart';
 import 'package:bill_chillin/features/group_expenses/presentation/screens/group_detail_screen.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +30,42 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const MainScreen(),
+      ),
+      GoRoute(
+        path: '/app/scan',
+        name: 'scan_receipt',
+        builder: (context, state) => const ScanReceiptPage(),
+      ),
+      GoRoute(
+        path: '/app/scan/review',
+        name: 'review_scanned_transactions',
+        builder: (context, state) {
+          final extra = state.extra;
+
+          // Supported extras:
+          // 1) List<ScannedTransaction>
+          // 2) Map { 'transactions': List<ScannedTransaction>, 'groupId': String?, 'members': Map<String,String>? }
+          if (extra is List && extra.isNotEmpty && extra.first is ScannedTransaction) {
+            return ReviewScannedTransactionsPage(
+              scannedTransactions: List<ScannedTransaction>.from(extra),
+            );
+          }
+
+          if (extra is Map) {
+            final txList = extra['transactions'];
+            final groupId = extra['groupId'] as String?;
+            final members = extra['members'] as Map<String, String>?;
+            if (txList is List && txList.isNotEmpty && txList.first is ScannedTransaction) {
+              return ReviewScannedTransactionsPage(
+                scannedTransactions: List<ScannedTransaction>.from(txList),
+                initialGroupId: groupId,
+                groupMembers: members ?? const {},
+              );
+            }
+          }
+
+          return const ReviewScannedTransactionsPage();
+        },
       ),
       GoRoute(
         path: AppRoutes.joinGroup,
