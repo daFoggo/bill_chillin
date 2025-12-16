@@ -17,8 +17,18 @@ class PersonalExpensesRemoteDataSourceImpl
 
   @override
   Future<void> addTransaction(TransactionEntity transaction) async {
+    final collection = firestore
+        .collection('users')
+        .doc(transaction.userId)
+        .collection('transactions');
+
+    // Generate Firestore ID if not provided (e.g. for scanned transactions)
+    final docRef = transaction.id.isNotEmpty
+        ? collection.doc(transaction.id)
+        : collection.doc();
+
     final transactionModel = TransactionModel(
-      id: transaction.id,
+      id: docRef.id,
       userId: transaction.userId,
       amount: transaction.amount,
       currency: transaction.currency,
@@ -32,12 +42,7 @@ class PersonalExpensesRemoteDataSourceImpl
       status: transaction.status,
     );
 
-    await firestore
-        .collection('users')
-        .doc(transaction.userId)
-        .collection('transactions')
-        .doc(transaction.id)
-        .set(transactionModel.toDocument());
+    await docRef.set(transactionModel.toDocument());
   }
 
   @override

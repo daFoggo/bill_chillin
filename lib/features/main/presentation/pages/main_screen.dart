@@ -14,6 +14,7 @@ import 'package:bill_chillin/features/profile/presentation/pages/profile_page.da
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bill_chillin/features/main/presentation/widgets/expandable_fab.dart';
+import 'package:go_router/go_router.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -97,7 +98,7 @@ class _MainScreenState extends State<MainScreen> {
                   PersonalExpensesPage.showTransactionBottomSheet(context);
                 },
                 onScanReceipt: () {
-                  // TODO: Navigate to Scan Receipt
+                  context.pushNamed('scan_receipt');
                 },
               ),
               floatingActionButtonLocation:
