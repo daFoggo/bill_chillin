@@ -122,17 +122,20 @@ class GroupRepositoryImpl implements GroupRepository {
       // Basic parsing logic: assume code is "billchillin://join/<groupId>"
       // If it's just the ID, use it directly.
       String groupId = inviteCode;
-      if (inviteCode.startsWith('https://billchillin.com/app/join/')) {
-        groupId = inviteCode.split('https://billchillin.com/app/join/').last;
-      } else if (inviteCode.startsWith('http://billchillin.com/app/join/')) {
-        groupId = inviteCode.split('http://billchillin.com/app/join/').last;
-      } else if (inviteCode.startsWith('https://example.com/join/')) {
-        groupId = inviteCode.split('https://example.com/join/').last;
-      } else if (inviteCode.startsWith('billchillin://app/join/')) {
-        groupId = inviteCode.split('billchillin://app/join/').last;
-      } else if (inviteCode.startsWith('billchillin://join/')) {
-        // Fallback for old format if any (though deprecated)
-        groupId = inviteCode.split('billchillin://join/').last;
+      final prefixes = [
+        'https://billchillin.web.app/app/join/',
+        'http://billchillin.web.app/app/join/',
+        'https://billchillin.firebaseapp.com/app/join/',
+        'http://billchillin.firebaseapp.com/app/join/',
+        'billchillin://app/join/',
+        'billchillin://join/',
+      ];
+
+      for (final prefix in prefixes) {
+        if (inviteCode.startsWith(prefix)) {
+          groupId = inviteCode.split(prefix).last;
+          break;
+        }
       }
 
       await remoteDataSource.joinGroup(groupId, userId);
