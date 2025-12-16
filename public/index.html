@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bill Chillin</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #f5f7fb;
+        color: #1f2933;
+      }
+      .container {
+        max-width: 520px;
+        margin: 40px auto;
+        padding: 24px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        color: #0b6cff;
+      }
+      p {
+        margin: 0 0 16px;
+        line-height: 1.5;
+      }
+      .code {
+        padding: 12px;
+        border-radius: 8px;
+        background: #f0f4ff;
+        word-break: break-all;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        margin-bottom: 16px;
+      }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+      .btn-primary {
+        background: #0b6cff;
+        color: #fff;
+        border-color: #0b6cff;
+      }
+      .btn-primary:hover {
+        background: #0854c6;
+        border-color: #0854c6;
+      }
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1f2933;
+        border-color: #d7dce3;
+      }
+      .btn-secondary:hover {
+        background: #e2e7ef;
+      }
+      .note {
+        margin-top: 18px;
+        font-size: 14px;
+        color: #4b5563;
+      }
+      .small {
+        font-size: 13px;
+        color: #6b7280;
+      }
+      @media (max-width: 640px) {
+        .container {
+          margin: 12px;
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="view">
+      <h1>Join Group</h1>
+      <p>Đang xử lý liên kết...</p>
+    </div>
+    <script>
+      (function () {
+        const view = document.getElementById("view");
+        const path = window.location.pathname || "";
+        const match = path.match(/^\/app\/join\/([^/?#]+)/);
+        const groupId = match ? decodeURIComponent(match[1]) : null;
+
+        const deepLink = groupId ? `billchillin://app/join/${groupId}` : null;
+        const shareLink = groupId
+          ? `https://billchillin.web.app/app/join/${groupId}`
+          : "https://billchillin.web.app/";
+
+        function renderJoin() {
+          view.innerHTML = `
+            <h1>Tham gia nhóm</h1>
+            <p>Nhấn "Mở app" để tham gia nhóm trong ứng dụng Bill Chillin.</p>
+            <div class="code">${groupId}</div>
+            <div class="actions">
+              <a class="btn btn-primary" href="${deepLink}">Mở app</a>
+              <a class="btn btn-secondary" href="${shareLink}">Sao chép liên kết</a>
+            </div>
+            <p class="note">Nếu app chưa cài đặt, vui lòng mở trên cửa hàng ứng dụng và thử lại.</p>
+            <p class="small">Liên kết: ${shareLink}</p>
+          `;
+
+          // Thử mở app ngay (không chặn UI)
+          if (deepLink) {
+            setTimeout(() => {
+              window.location.href = deepLink;
+            }, 150);
+          }
+        }
+
+        function renderHome() {
+          view.innerHTML = `
+            <h1>Bill Chillin</h1>
+            <p>Liên kết không hợp lệ. Vui lòng kiểm tra lại đường dẫn mời nhóm.</p>
+          `;
+        }
+
+        if (groupId) {
+          renderJoin();
+        } else {
+          renderHome();
+        }
+      })();
+    </script>
+  </body>
+</html>
