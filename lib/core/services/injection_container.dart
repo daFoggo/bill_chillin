@@ -44,8 +44,16 @@ Future<void> init() async {
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
+  final webClientId = dotenv.env['GOOGLE_OAUTH_WEB_CLIENT_ID'];
+  assert(
+    webClientId != null && webClientId.isNotEmpty,
+    'GOOGLE_OAUTH_WEB_CLIENT_ID chưa được cấu hình trong .env',
+  );
+
+  // GoogleSignIn trên web dùng singleton `GoogleSignIn.instance`
+  // và cần truyền `clientId` để tránh lỗi "ClientID not set".
   await GoogleSignIn.instance.initialize(
-    serverClientId: dotenv.env['GOOGLE_OAUTH_WEB_CLIENT_ID']!,
+    clientId: webClientId,
   );
   sl.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn.instance);
 
