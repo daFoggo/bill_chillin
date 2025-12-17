@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:bill_chillin/features/scan/domain/entities/scanned_transaction.dart';
 import 'package:flutter/foundation.dart';
@@ -20,17 +19,19 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
   final ImagePicker _picker = ImagePicker();
   bool _processing = false;
   DateTime? _lastApiCallTime;
-  static const Duration _minApiCallInterval = Duration(seconds: 2); // Tối thiểu 2 giây giữa các lần gọi
+  static const Duration _minApiCallInterval = Duration(
+    seconds: 2,
+  ); // Tối thiểu 2 giây giữa các lần gọi
   static const int _maxRetries = 3;
-  
+
   // Fallback API keys nếu key trong .env thất bại
-  static const List<String> _fallbackApiKeys = [
-    'AIzaSyB0KK8aMJGt4zjnzKF-rMhChUMQvv9T2a8',
-    'AIzaSyAXLRcFWSg7Zf74wABn9D0MHiq5xA7UWeI',
-    'AIzaSyA8mbxmZHMx1yeZLWmTlejtKuzAIUOXr4M',
-    'AIzaSyDc0sNJ8H6kmVuSZALT24gI9lBFbwnNGWc',
-    'AIzaSyAFt2sXv-Bi3Ptn3-MtqGbyBrLgBI3bnRk',
-    'AIzaSyDaDZf08P3TQpqmD063NTjLjdCBkXZPRSU',
+  static final List<String> _fallbackApiKeys = [
+    dotenv.env['FALLBACK_API_KEY_1']!,
+    dotenv.env['FALLBACK_API_KEY_2']!,
+    dotenv.env['FALLBACK_API_KEY_3']!,
+    dotenv.env['FALLBACK_API_KEY_4']!,
+    dotenv.env['FALLBACK_API_KEY_5']!,
+    dotenv.env['FALLBACK_API_KEY_6']!,
   ];
 
   @override
@@ -39,9 +40,7 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
 
     if (kIsWeb) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Scan receipt'),
-        ),
+        appBar: AppBar(title: const Text('Scan receipt')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -57,9 +56,7 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan receipt'),
-      ),
+      appBar: AppBar(title: const Text('Scan receipt')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -81,9 +78,7 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
               FilledButton.icon(
                 onPressed: _processing ? null : _onCapturePressed,
                 icon: const Icon(Icons.camera_alt),
-                label: Text(
-                  _processing ? 'Analyzing...' : 'Capture receipt',
-                ),
+                label: Text(_processing ? 'Analyzing...' : 'Capture receipt'),
               ),
             ],
           ),
@@ -94,16 +89,19 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
 
   Future<void> _onCapturePressed() async {
     if (kIsWeb) return;
-    
+
     final now = DateTime.now();
     if (_lastApiCallTime != null) {
       final timeSinceLastCall = now.difference(_lastApiCallTime!);
       if (timeSinceLastCall < _minApiCallInterval) {
-        final remainingSeconds = (_minApiCallInterval.inSeconds - timeSinceLastCall.inSeconds);
+        final remainingSeconds =
+            (_minApiCallInterval.inSeconds - timeSinceLastCall.inSeconds);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Please wait ${remainingSeconds}s before scanning again'),
+              content: Text(
+                'Please wait ${remainingSeconds}s before scanning again',
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -126,9 +124,9 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
       }
 
       final bytes = await picked.readAsBytes();
-      
+
       _lastApiCallTime = DateTime.now();
-      
+
       final transactions = await _analyzeReceiptWithAi(bytes);
 
       if (!mounted) return;
@@ -174,7 +172,7 @@ class _ScanReceiptPageState extends State<ScanReceiptPage> {
 
     // Tạo danh sách keys để thử (primary key + fallback keys)
     final List<String> apiKeysToTry = [primaryApiKey, ..._fallbackApiKeys];
-    
+
     // Loại bỏ duplicate nếu primary key trùng với một trong fallback keys
     final uniqueKeys = apiKeysToTry.toSet().toList();
 
@@ -209,7 +207,7 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
               'inlineData': {
                 'mimeType': 'image/jpeg',
                 'data': base64Encode(imageBytes),
-              }
+              },
             },
           ],
         },
@@ -222,7 +220,9 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
       final isPrimaryKey = keyIndex == 0;
 
       if (!isPrimaryKey) {
-        debugPrint('Trying fallback API key ${keyIndex}/${uniqueKeys.length - 1}');
+        debugPrint(
+          'Trying fallback API key $keyIndex/${uniqueKeys.length - 1}',
+        );
         // Đợi một chút trước khi thử key tiếp theo
         await Future.delayed(const Duration(seconds: 1));
       }
@@ -238,20 +238,24 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
           // Nếu không phải lần thử đầu tiên, đợi một chút trước khi retry
           if (attempt > 0) {
             final delaySeconds = (attempt * 2); // 2s, 4s, 6s...
-            debugPrint('Retrying API call after ${delaySeconds}s (attempt ${attempt + 1}/$_maxRetries)');
+            debugPrint(
+              'Retrying API call after ${delaySeconds}s (attempt ${attempt + 1}/$_maxRetries)',
+            );
             await Future.delayed(Duration(seconds: delaySeconds));
           }
 
-          final response = await http.post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          ).timeout(
-            const Duration(seconds: 30), // Timeout sau 30 giây
-            onTimeout: () {
-              throw Exception('Request timeout after 30 seconds');
-            },
-          );
+          final response = await http
+              .post(
+                uri,
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(requestBody),
+              )
+              .timeout(
+                const Duration(seconds: 30), // Timeout sau 30 giây
+                onTimeout: () {
+                  throw Exception('Request timeout after 30 seconds');
+                },
+              );
 
           // Xử lý các status code khác nhau
           if (response.statusCode == 200) {
@@ -259,12 +263,18 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
             successfulResponse = response;
             lastException = null;
             keySucceeded = true;
-            debugPrint('API call succeeded with ${isPrimaryKey ? "primary" : "fallback"} key');
+            debugPrint(
+              'API call succeeded with ${isPrimaryKey ? "primary" : "fallback"} key',
+            );
             break;
           } else if (response.statusCode == 401 || response.statusCode == 403) {
             // Invalid API key - thử key tiếp theo ngay lập tức
-            debugPrint('Invalid API key (${response.statusCode}), trying next key...');
-            lastException = Exception('Invalid API key (${response.statusCode})');
+            debugPrint(
+              'Invalid API key (${response.statusCode}), trying next key...',
+            );
+            lastException = Exception(
+              'Invalid API key (${response.statusCode})',
+            );
             break; // Break khỏi retry loop, thử key tiếp theo
           } else if (response.statusCode == 429) {
             // Rate limit - nếu là primary key, thử fallback. Nếu đã là fallback, retry với delay
@@ -273,25 +283,35 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
               break; // Break khỏi retry loop, thử fallback key
             } else {
               // Đã là fallback key, retry với delay
-              lastException = Exception('Rate limit exceeded (${response.statusCode})');
+              lastException = Exception(
+                'Rate limit exceeded (${response.statusCode})',
+              );
               if (attempt < _maxRetries - 1) {
                 final delaySeconds = (attempt + 1) * 10;
-                debugPrint('Rate limited. Waiting ${delaySeconds}s before retry...');
+                debugPrint(
+                  'Rate limited. Waiting ${delaySeconds}s before retry...',
+                );
                 await Future.delayed(Duration(seconds: delaySeconds));
                 continue;
               }
             }
           } else if (response.statusCode == 503) {
             // Service unavailable - retry với backoff
-            lastException = Exception('Service temporarily unavailable (${response.statusCode})');
+            lastException = Exception(
+              'Service temporarily unavailable (${response.statusCode})',
+            );
             if (attempt < _maxRetries - 1) {
               continue; // Sẽ retry với delay đã tính ở trên
             }
           } else {
             // Lỗi khác - không retry, thử key tiếp theo
-            lastException = Exception('AI request failed: ${response.statusCode} ${response.body}');
+            lastException = Exception(
+              'AI request failed: ${response.statusCode} ${response.body}',
+            );
             if (isPrimaryKey && keyIndex < uniqueKeys.length - 1) {
-              debugPrint('Error ${response.statusCode} on primary key, trying fallback...');
+              debugPrint(
+                'Error ${response.statusCode} on primary key, trying fallback...',
+              );
               break; // Break khỏi retry loop, thử fallback key
             } else {
               break; // Break khỏi retry loop
@@ -313,17 +333,15 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
 
     // Nếu vẫn lỗi sau tất cả keys và retries
     if (lastException != null || successfulResponse == null) {
-      throw lastException ?? Exception('Failed to get response from API after trying all keys');
+      throw lastException ??
+          Exception('Failed to get response from API after trying all keys');
     }
 
     // Parse response từ successful response
     final decoded = jsonDecode(successfulResponse.body);
     final parts = decoded['candidates']?[0]?['content']?['parts'] as List?;
-    final combinedText = parts
-            ?.map((p) => (p['text'] as String?) ?? '')
-            .join('\n')
-            .trim() ??
-        '';
+    final combinedText =
+        parts?.map((p) => (p['text'] as String?) ?? '').join('\n').trim() ?? '';
     if (combinedText.isEmpty) {
       return [];
     }
@@ -333,14 +351,16 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
       // Một số khi model có thể trả thêm text thừa, nên cố gắng cắt lấy đoạn JSON thuần.
       final start = combinedText.indexOf('{');
       final end = combinedText.lastIndexOf('}');
-      final jsonSlice =
-          (start != -1 && end != -1 && end > start) ? combinedText.substring(start, end + 1) : combinedText;
+      final jsonSlice = (start != -1 && end != -1 && end > start)
+          ? combinedText.substring(start, end + 1)
+          : combinedText;
       jsonResult = jsonDecode(jsonSlice);
     } catch (_) {
       throw Exception('Failed to parse AI response as JSON');
     }
 
-    final List<dynamic> items = (jsonResult['transactions'] as List?) ?? const [];
+    final List<dynamic> items =
+        (jsonResult['transactions'] as List?) ?? const [];
     return items.map<ScannedTransaction>((item) {
       final desc = item['description']?.toString() ?? 'Item';
       final category = item['category']?.toString() ?? '';
@@ -368,5 +388,3 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
     }).toList();
   }
 }
-
-

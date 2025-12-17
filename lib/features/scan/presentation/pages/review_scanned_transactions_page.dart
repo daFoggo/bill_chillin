@@ -17,10 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-enum ScanTargetMode {
-  personal,
-  group,
-}
+enum ScanTargetMode { personal, group }
 
 class ReviewScannedTransactionsPage extends StatefulWidget {
   final List<ScannedTransaction> scannedTransactions;
@@ -60,7 +57,7 @@ class _ReviewScannedTransactionsPageState
             id: entry.key,
             email: entry.value,
             name: entry.value,
-          )
+          ),
       };
     }
     // Nếu có initialGroupId nhưng chưa có members, load sau khi widget build xong
@@ -81,7 +78,9 @@ class _ReviewScannedTransactionsPageState
       (failure) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load group: ${failure.toString()}')),
+            SnackBar(
+              content: Text('Failed to load group: ${failure.toString()}'),
+            ),
           );
         }
       },
@@ -96,7 +95,11 @@ class _ReviewScannedTransactionsPageState
           (failure) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to load members: ${failure.toString()}')),
+                SnackBar(
+                  content: Text(
+                    'Failed to load members: ${failure.toString()}',
+                  ),
+                ),
               );
             }
           },
@@ -199,9 +202,7 @@ class _ReviewScannedTransactionsPageState
                       itemBuilder: (context, index) {
                         final item = widget.scannedTransactions[index];
                         return ListTile(
-                          leading: CircleAvatar(
-                            child: Text('${index + 1}'),
-                          ),
+                          leading: CircleAvatar(child: Text('${index + 1}')),
                           title: Text(
                             item.description,
                             maxLines: 2,
@@ -236,9 +237,9 @@ class _ReviewScannedTransactionsPageState
 
   void _onSave(BuildContext context) {
     if (widget.scannedTransactions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No scanned items to save')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No scanned items to save')));
       return;
     }
 
@@ -271,8 +272,9 @@ class _ReviewScannedTransactionsPageState
         type: 'expense',
         date: scanned.date,
         categoryId: 'uncategorized',
-        categoryName:
-            scanned.category.isNotEmpty ? scanned.category : 'Unclassified',
+        categoryName: scanned.category.isNotEmpty
+            ? scanned.category
+            : 'Unclassified',
         categoryIcon: '',
         note: scanned.description,
         searchKeywords: const [],
@@ -327,22 +329,26 @@ class _ReviewScannedTransactionsPageState
     }
 
     if (_selectedGroupId == null || _selectedGroupId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a group')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a group')));
       return;
     }
 
     if (_selectedPayerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select who paid for this transaction')),
+        const SnackBar(
+          content: Text('Please select who paid for this transaction'),
+        ),
       );
       return;
     }
 
     if (_selectedMembers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one member to split')),
+        const SnackBar(
+          content: Text('Please select at least one member to split'),
+        ),
       );
       return;
     }
@@ -358,9 +364,7 @@ class _ReviewScannedTransactionsPageState
     final addGroupTransaction = sl<AddGroupTransactionUseCase>();
 
     // Tính splitDetails mặc định từ selected members
-    final evenSplitter = _EvenSplitHelper(
-      members: _selectedMembers.toList(),
-    );
+    final evenSplitter = _EvenSplitHelper(members: _selectedMembers.toList());
 
     Future<void> openSheetFor(ScannedTransaction scanned) async {
       // Tính splitDetails mặc định cho transaction này
@@ -374,7 +378,9 @@ class _ReviewScannedTransactionsPageState
         type: 'expense',
         date: scanned.date,
         categoryId: 'uncategorized',
-        categoryName: scanned.category.isNotEmpty ? scanned.category : 'Unclassified',
+        categoryName: scanned.category.isNotEmpty
+            ? scanned.category
+            : 'Unclassified',
         categoryIcon: '',
         note: scanned.description,
         searchKeywords: const [],
@@ -411,7 +417,7 @@ class _ReviewScannedTransactionsPageState
                 debugPrint('  - splitDetails: ${tx.splitDetails}');
                 debugPrint('  - amount: ${tx.amount}');
                 debugPrint('  - status: ${tx.status}');
-                
+
                 // Validate transaction trước khi save
                 if (tx.groupId == null || tx.groupId!.isEmpty) {
                   if (sheetContext.mounted) {
@@ -477,53 +483,63 @@ class _ReviewScannedTransactionsPageState
 
                 // Gọi use case để save (async)
                 addGroupTransaction(
-                  AddGroupTransactionParams(
-                    groupId: _selectedGroupId!,
-                    transaction: tx,
-                  ),
-                ).then((result) {
-                  result.fold(
-                    (failure) {
-                      // Lỗi từ repository
-                      debugPrint('Save failed: ${failure.toString()}');
+                      AddGroupTransactionParams(
+                        groupId: _selectedGroupId!,
+                        transaction: tx,
+                      ),
+                    )
+                    .then((result) {
+                      result.fold(
+                        (failure) {
+                          // Lỗi từ repository
+                          debugPrint('Save failed: ${failure.toString()}');
+                          if (sheetContext.mounted) {
+                            ScaffoldMessenger.of(sheetContext).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Failed to save: ${failure.toString()}',
+                                ),
+                                backgroundColor: Theme.of(
+                                  sheetContext,
+                                ).colorScheme.error,
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
+                          }
+                        },
+                        (_) {
+                          // Save thành công, đóng bottom sheet
+                          debugPrint('Save successful, closing sheet');
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                            ScaffoldMessenger.of(sheetContext).showSnackBar(
+                              const SnackBar(
+                                content: Text('Transaction saved successfully'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    })
+                    .catchError((error, stackTrace) {
+                      // Catch bất kỳ exception nào không được handle
+                      debugPrint('Error saving group transaction: $error');
+                      debugPrint('Stack trace: $stackTrace');
                       if (sheetContext.mounted) {
                         ScaffoldMessenger.of(sheetContext).showSnackBar(
                           SnackBar(
-                            content: Text('Failed to save: ${failure.toString()}'),
-                            backgroundColor: Theme.of(sheetContext).colorScheme.error,
+                            content: Text(
+                              'Unexpected error: ${error.toString()}',
+                            ),
+                            backgroundColor: Theme.of(
+                              sheetContext,
+                            ).colorScheme.error,
                             duration: const Duration(seconds: 4),
                           ),
                         );
                       }
-                    },
-                    (_) {
-                      // Save thành công, đóng bottom sheet
-                      debugPrint('Save successful, closing sheet');
-                      if (sheetContext.mounted) {
-                        Navigator.pop(sheetContext);
-                        ScaffoldMessenger.of(sheetContext).showSnackBar(
-                          const SnackBar(
-                            content: Text('Transaction saved successfully'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                  );
-                }).catchError((error, stackTrace) {
-                  // Catch bất kỳ exception nào không được handle
-                  debugPrint('Error saving group transaction: $error');
-                  debugPrint('Stack trace: $stackTrace');
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      SnackBar(
-                        content: Text('Unexpected error: ${error.toString()}'),
-                        backgroundColor: Theme.of(sheetContext).colorScheme.error,
-                        duration: const Duration(seconds: 4),
-                      ),
-                    );
-                  }
-                });
+                    });
               },
             ),
           );
@@ -557,19 +573,18 @@ class _ReviewScannedTransactionsPageState
           );
         }
 
-        final groups = state is GroupListLoaded ? state.groups : <GroupEntity>[];
+        final groups = state is GroupListLoaded
+            ? state.groups
+            : <GroupEntity>[];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Group Selection Dropdown
-            Text(
-              'Select Group',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Select Group', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedGroupId,
+              initialValue: _selectedGroupId,
               decoration: const InputDecoration(
                 labelText: 'Group',
                 hintText: 'Choose a group',
@@ -652,10 +667,7 @@ class _ReviewScannedTransactionsPageState
             ] else if (_selectedGroupId != null && _memberDetails.isEmpty) ...[
               const Center(child: CircularProgressIndicator()),
               const SizedBox(height: 8),
-              Text(
-                'Loading members...',
-                style: theme.textTheme.bodySmall,
-              ),
+              Text('Loading members...', style: theme.textTheme.bodySmall),
             ] else if (_selectedGroupId == null) ...[
               Text(
                 'Please select a group first',
@@ -682,6 +694,3 @@ class _EvenSplitHelper {
     return {for (final m in members) m: share};
   }
 }
-
-
-
