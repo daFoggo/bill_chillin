@@ -346,6 +346,16 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     Map<String, double>? splitDetails;
     if (widget.group != null) {
       // Split Logic: Equal split
+      if (_selectedParticipants.isEmpty) {
+        // Không có participants, không thể split
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select at least one participant'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       final splitAmount = amount / _selectedParticipants.length;
       splitDetails = {};
       for (var p in _selectedParticipants) {
@@ -353,8 +363,16 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       }
     }
 
+    // Đảm bảo transaction luôn có ID hợp lệ
+    String transactionId;
+    if (widget.transaction?.id != null && widget.transaction!.id.isNotEmpty) {
+      transactionId = widget.transaction!.id;
+    } else {
+      transactionId = const Uuid().v4();
+    }
+
     final transaction = TransactionEntity(
-      id: widget.transaction?.id ?? const Uuid().v4(),
+      id: transactionId,
       userId: widget.userId,
       amount: amount,
       type: widget.group != null ? 'expense' : _type,
@@ -372,7 +390,15 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       status: widget.group != null ? 'confirmed' : 'completed',
     );
 
-    widget.onSave(transaction);
+    // Gọi onSave và xử lý cả sync và async
+    final result = widget.onSave(transaction);
+    // Nếu onSave trả về Future, không cần await ở đây vì onSave callback sẽ tự xử lý
+    // Nhưng để đảm bảo, nếu result là Future thì có thể log
+    if (result is Future) {
+      result.catchError((error) {
+        debugPrint('Error in onSave callback: $error');
+      });
+    }
   }
 
   void _showCategorySelectionSheet() {

@@ -45,5 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera permission for scan/OCR -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires camera access to scan receipts and QR codes.</string>
 </dict>
 </plist>

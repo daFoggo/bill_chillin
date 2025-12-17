@@ -51,6 +51,9 @@ dependencies:
   isar_community: ^3.3.0
   isar_community_flutter_libs: ^3.3.0
   fl_chart: ^1.1.1
+  mobile_scanner: ^3.5.7
+  image_picker: ^1.1.2
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
