@@ -47,9 +47,6 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra;
 
-          // Supported extras:
-          // 1) List<ScannedTransaction>
-          // 2) Map { 'transactions': List<ScannedTransaction>, 'groupId': String?, 'members': Map<String,String>? }
           if (extra is List &&
               extra.isNotEmpty &&
               extra.first is ScannedTransaction) {
@@ -101,7 +98,6 @@ class AppRouter {
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
       final isJoinGroup = state.matchedLocation.startsWith('/app/join');
 
-      // If we are initializing, stay on splash
       if (authState is AuthInitial) {
         return null;
       }

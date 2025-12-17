@@ -128,9 +128,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<List<UserModel>> getUsersByIds(List<String> userIds) async {
     if (userIds.isEmpty) return [];
 
-    // Using Future.wait to fetch in parallel.
-    // In a production app with many users, we might batch this with whereIn (chunks of 10).
-    // For now, individual gets are acceptable for typical group sizes.
     final futures = userIds.map((uid) async {
       try {
         final doc = await firestore.collection('users').doc(uid).get();
@@ -138,9 +135,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           return UserModel.fromFirestore(doc);
         }
       } catch (e) {
-        // Ignore errors for individual users, just skip them
+        throw ServerException();
       }
-      return null;
     });
 
     final results = await Future.wait(futures);

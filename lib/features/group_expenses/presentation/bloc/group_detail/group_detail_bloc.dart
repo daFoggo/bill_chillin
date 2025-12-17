@@ -114,15 +114,12 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     Emitter<GroupDetailState> emit,
   ) async {
     final result = await deleteGroupUseCase(event.groupId);
-    result.fold((failure) => emit(GroupDetailError(message: failure.toString())), (
-      _,
-    ) {
-      // Navigate back or show success? The UI should handle state change or navigation.
-      // We probably should emit a "Deleted" state or similar, but for now allow error/success flow.
-      // If deleted, loading again will fail.
-      // Let's emit a specific state or just let the caller handle it.
-      // ideally emit GroupDeleted() state.
-    });
+    result.fold(
+      (failure) => emit(GroupDetailError(message: failure.toString())),
+      (_) {
+        emit(GroupDetailInitial());
+      },
+    );
   }
 
   Future<void> _onAddGroupTransaction(
@@ -141,8 +138,6 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
       result.fold(
         (failure) => emit(GroupDetailError(message: failure.toString())),
         (_) {
-          // Allow firestore to update and we re-fetch, or optimistically update
-          // For now, re-fetch
           add(LoadGroupDetailEvent(groupId: currentState.group.id));
         },
       );
@@ -179,7 +174,7 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
 
             membersResult.fold(
               (failure) {
-                // Ignore failure, just show IDs
+                emit(GroupDetailError(message: failure.toString()));
               },
               (users) {
                 memberDetails = {for (var u in users) u.id: u};
@@ -213,29 +208,12 @@ class GroupDetailBloc extends Bloc<GroupDetailEvent, GroupDetailState> {
     ShareGroupLinkEvent event,
     Emitter<GroupDetailState> emit,
   ) async {
-    // Ideally we emit a state with the link, or just trigger a side effect (UI listener)
-    // But since we persist state, we can't easily "return" the link without changing state.
-    // For simplicity, let's assume successful generation triggers a specific state or we just log it/call a callback?
-    // BLoC pattern best practice: Emit a state "GroupLinkGenerated(link)".
-    // But we want to stay "Loaded".
-    // Alternatively, UI calls generating link directly? No, logic should be here.
-
-    // Let's emit GroupDetailLoaded with a "pending message" or similar, or a dedicated "GroupLinkReady" state that extends Loaded?
-    // Or simpler: Emit "GroupLinkGenerated" -> UI shows dialog -> Emit "GroupDetailLoaded" back.
-    // But that causes rebuilds.
-    // Let's use `GroupDetailLoaded` with an optional `showShareLink` field?
-    // Nah, let's keep it simple. We will emit a specific one-off event/state if possible, or just print for now.
-    // Actually, let's emit a specific state for a moment or use a Listener in UI.
-
     final result = await generateInviteLinkUseCase(event.groupId);
-    result.fold(
-      (failure) => null, // Ignore error for now
-      (link) {
-        if (state is GroupDetailLoaded) {
-          final currentState = state as GroupDetailLoaded;
-          emit(currentState.copyWith(shareLink: link));
-        }
-      },
-    );
+    result.fold((failure) => null, (link) {
+      if (state is GroupDetailLoaded) {
+        final currentState = state as GroupDetailLoaded;
+        emit(currentState.copyWith(shareLink: link));
+      }
+    });
   }
 }

@@ -69,7 +69,6 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
         searchKeywords: const [],
       );
 
-      // Auto copy link
       final link = 'https://billchillin.web.app/app/join/$groupId';
       Clipboard.setData(ClipboardData(text: link)).then((_) {
         if (mounted) {

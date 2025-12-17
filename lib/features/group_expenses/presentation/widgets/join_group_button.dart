@@ -87,18 +87,7 @@ class _JoinGroupSheetState extends State<_JoinGroupSheet> {
         });
       },
       (_) {
-        // Close bottom sheet
         Navigator.pop(context);
-
-        // Extract group ID for navigation
-        // Similar parsing logic as repository to ensure we navigate to right place?
-        // Actually, the repository logic extracts ID but usecase returns void.
-        // We might need to assume the input is the ID or extract it again here roughly
-        // OR modify usecase to return groupId.
-        // For now, let's try to extract basic ID if it's a link, or use as is.
-        // The repository handles the actual join, but doesn't return the ID to us.
-        // However, if the user successfully joined, we want to go there.
-        // Re-parsing ID for navigation:
 
         String groupId = input;
         final prefixes = [

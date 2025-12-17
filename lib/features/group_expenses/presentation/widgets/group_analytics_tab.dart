@@ -33,15 +33,7 @@ class GroupAnalyticsTab extends StatelessWidget {
     // 4. Calculate Distribution
     final Map<String, double> categoryMap = {};
     for (var tx in validTransactions) {
-      // Use categoryName if available, else use categoryId or "Unknown"
-      // Assuming tx has categoryId, and we might need to map it to name using another way
-      // But TransactionEntity usually has categoryName or we rely on ID.
-      // Wait, TransactionEntity in this project:
-      // final String categoryId;
-      // final String? categoryName;
-      // final String? categoryIcon;
-      // Let's use categoryName if present.
-      final key = tx.categoryName ?? 'Other';
+      final key = tx.categoryName;
       categoryMap[key] = (categoryMap[key] ?? 0) + tx.amount;
     }
 
@@ -71,8 +63,7 @@ class GroupAnalyticsTab extends StatelessWidget {
           const SizedBox(height: 16),
           FinancialTrendChartCard(
             monthlyExpenseTrends: monthlyExpenseTrends,
-            monthlyIncomeTrends:
-                const {}, // No income in group expenses usually
+            monthlyIncomeTrends: const {},
           ),
         ],
       ),

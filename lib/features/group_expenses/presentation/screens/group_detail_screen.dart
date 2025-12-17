@@ -257,8 +257,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           TextButton(
             onPressed: () {
               bloc.add(DeleteGroupEvent(groupId: widget.groupId));
-              Navigator.pop(ctx); // Close dialog
-              Navigator.pop(context); // Go back to list
+              Navigator.pop(ctx);
+              Navigator.pop(context);
             },
             style: TextButton.styleFrom(
               foregroundColor: theme.colorScheme.error,

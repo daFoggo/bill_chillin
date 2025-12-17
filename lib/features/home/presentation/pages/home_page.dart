@@ -97,7 +97,6 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Balance Card
-                  // BalanceCard
                   BalanceCard(
                     balance: balance,
                     distribution: state is HomeLoaded
@@ -142,7 +141,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Chart Section
                   // Chart Section
                   if (state is HomeLoaded) ...[
                     DistributionChartCard(

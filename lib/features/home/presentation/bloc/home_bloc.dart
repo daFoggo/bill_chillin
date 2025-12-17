@@ -16,24 +16,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(HomeLoading());
 
-    // We fetch ALL transactions to calculate the absolute Total Balance
-    // In a real app with many transactions, you might want to fetch only what's needed
-    // or keep a running balance in the User document. For now, we fetch all.
     final result = await repository.getTransactions(userId: event.userId);
 
     result.fold((failure) => emit(HomeError(failure.message)), (
       allTransactions,
     ) {
       final now = DateTime.now();
-
-      // --- Date Ranges ---
-
-      // Current Year (for Financial Trends)
       final startOfYear = DateTime(now.year, 1, 1);
       final endOfYear = DateTime(now.year, 12, 31, 23, 59, 59);
-
-      // Current Week (Monday to Sunday)
-      // weekend is 6 and 7 in Dart? No, weekday is 1(Mon) to 7(Sun)
       final currentWeekday = now.weekday;
       final startOfWeek = DateTime(
         now.year,
@@ -49,10 +39,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         59,
       ).add(Duration(days: 7 - currentWeekday));
 
-      // --- Data Buckets ---
-
       double totalBalance = 0;
-
       // Weekly Stats
       double weeklyIncome = 0;
       double weeklyExpense = 0;

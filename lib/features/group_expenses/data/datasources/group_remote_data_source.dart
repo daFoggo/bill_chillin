@@ -15,7 +15,6 @@ abstract class GroupRemoteDataSource {
 
   Future<String> generateInviteLink(String groupId);
 
-  // Group Transactions
   Future<void> addTransaction(String groupId, TransactionModel transaction);
   Future<void> updateTransaction(String groupId, TransactionModel transaction);
   Future<void> deleteTransaction(String groupId, String transactionId);
@@ -113,9 +112,6 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
 
   @override
   Future<String> generateInviteLink(String groupId) async {
-    // Using https scheme which is more standard and clickable in many apps
-    // This will require Android App Links configuration for full seamlessness,
-    // but for testing, we can use an Intent Filter for this host.
     return 'https://billchillin.web.app/app/join/$groupId';
   }
 
@@ -125,7 +121,6 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     TransactionModel transaction,
   ) async {
     try {
-      // Đảm bảo transaction có ID hợp lệ
       if (transaction.id.isEmpty) {
         throw ServerException('Transaction ID cannot be empty');
       }

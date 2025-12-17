@@ -17,7 +17,6 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await di.init();
 
-  // Create AuthBloc instance to be shared between Router and UI
   final authBloc = di.sl<AuthBloc>()..add(AuthCheckStatusEvent());
   final appRouter = AppRouter(authBloc);
 

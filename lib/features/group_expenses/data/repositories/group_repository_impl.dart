@@ -119,8 +119,6 @@ class GroupRepositoryImpl implements GroupRepository {
     String userId,
   ) async {
     try {
-      // Basic parsing logic: assume code is "billchillin://join/<groupId>"
-      // If it's just the ID, use it directly.
       String groupId = inviteCode;
       final prefixes = [
         'https://billchillin.web.app/app/join/',

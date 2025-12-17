@@ -105,17 +105,6 @@ class PersonalExpensesRepositoryImpl implements PersonalExpensesRepository {
           groupTransactionsList.addAll(relevantTransactions);
         }
       } catch (e) {
-        // If group fetch fails, just ignore? Or log?
-        // For hybrid, maybe we shouldn't fail everything if groups fail.
-        // But to be safe, let's propagate error or just continue.
-        // Let's print error but continue to return personal ones if mostly network issue?
-        // No, `Left` is safer practice.
-        // But throwing exception inside try-catch block here will be caught by outer catch.
-        // Let's allow partial failure? No, strict consistence is better.
-        // Throwing will be caught by outer block.
-        print('Error fetching group transactions: $e');
-        // We'll proceed with what we have if specific group fails?
-        // Let's rethrow to be safe for now since we want "Hybrid" validity.
         rethrow;
       }
 

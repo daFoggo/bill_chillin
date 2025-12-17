@@ -36,12 +36,6 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
     }
 
     final useCase = sl<JoinGroupViaLinkUseCase>();
-    // Note: UseCase expects "billchillin://join/ID" or "ID".
-    // Since we extracted ID from URL path, we can pass just ID.
-    // The usecase handles raw parsing, so we should check how it behaves.
-    // Previous view of `JoinGroupViaLinkUseCase` implementation:
-    // It checks if startsWith 'billchillin://...'. If not, assumes ID.
-    // So passing ID is fine.
 
     final result = await useCase(
       JoinGroupViaLinkParams(inviteCode: widget.groupId, userId: user.uid),
@@ -57,15 +51,10 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
         });
       },
       (_) {
-        // Success. Navigate to Group Detail.
-        // We use Navigator to push replacement so back button goes to Main, ideally.
-        // Or specific route if defined. For now, MaterialPageRoute is quick.
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => GroupDetailScreen(
-              groupId: widget.groupId,
-              groupName: "Group", // Name will be loaded by screen
-            ),
+            builder: (_) =>
+                GroupDetailScreen(groupId: widget.groupId, groupName: "Group"),
           ),
         );
       },

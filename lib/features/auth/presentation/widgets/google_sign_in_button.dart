@@ -23,9 +23,7 @@ class GoogleSignInButton extends StatelessWidget {
               foregroundColor: Colors.black87,
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  28,
-                ), // Matches standard Material 3
+                borderRadius: BorderRadius.circular(28),
                 side: const BorderSide(color: Colors.black12),
               ),
             ),
@@ -52,8 +50,7 @@ class GoogleSignInButton extends StatelessWidget {
                       const Text(
                         "Continue with Google",
                         style: TextStyle(
-                          fontSize:
-                              16, // Slightly adjusted for standard buttons
+                          fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

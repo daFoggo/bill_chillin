@@ -42,7 +42,7 @@ class _GroupExpensesTabState extends State<GroupExpensesTab>
   }
 
   void _onMonthlyTabChanged() {
-    setState(() {}); // Rebuild to filter transactions
+    setState(() {});
   }
 
   @override
@@ -77,9 +77,7 @@ class _GroupExpensesTabState extends State<GroupExpensesTab>
                       ),
                     );
                   },
-                  onLongPress: (tx) {
-                    // TODO: Add options
-                  },
+                  onLongPress: (tx) {},
                 ),
         ),
       ],
