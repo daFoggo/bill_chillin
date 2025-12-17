@@ -70,7 +70,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
       );
 
       // Auto copy link
-      final link = 'https://billchillin.app/group/join?id=$groupId';
+      final link = 'https://billchillin.web.app/app/join/$groupId';
       Clipboard.setData(ClipboardData(text: link)).then((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

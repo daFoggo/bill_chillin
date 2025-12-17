@@ -116,7 +116,7 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     // Using https scheme which is more standard and clickable in many apps
     // This will require Android App Links configuration for full seamlessness,
     // but for testing, we can use an Intent Filter for this host.
-    return 'https://billchillin.com/app/join/$groupId';
+    return 'https://billchillin.web.app/app/join/$groupId';
   }
 
   @override

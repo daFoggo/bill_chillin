@@ -3,4 +3,5 @@ class AppRoutes {
   static const String home = '/';
   static const String joinGroup = '/app/join/:groupId';
   static const String groupDetail = '/group_detail/:groupId';
+  static const String splash = '/splash';
 }
