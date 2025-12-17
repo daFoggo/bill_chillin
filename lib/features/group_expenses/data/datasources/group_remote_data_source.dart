@@ -125,6 +125,11 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     TransactionModel transaction,
   ) async {
     try {
+      // Đảm bảo transaction có ID hợp lệ
+      if (transaction.id.isEmpty) {
+        throw ServerException('Transaction ID cannot be empty');
+      }
+
       await firestore
           .collection('groups')
           .doc(groupId)

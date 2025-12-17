@@ -38,8 +38,16 @@ class PersonalExpensesRemoteDataSourceImpl
       categoryName: transaction.categoryName,
       categoryIcon: transaction.categoryIcon,
       note: transaction.note,
-      createdAt: DateTime.now(),
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt,
       status: transaction.status,
+      groupId: transaction.groupId,
+      groupName: transaction.groupName,
+      payerId: transaction.payerId,
+      participants: transaction.participants,
+      splitDetails: transaction.splitDetails,
+      imageUrl: transaction.imageUrl,
+      searchKeywords: transaction.searchKeywords,
     );
 
     await docRef.set(transactionModel.toDocument());

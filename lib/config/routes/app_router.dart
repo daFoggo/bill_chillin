@@ -45,7 +45,9 @@ class AppRouter {
           // Supported extras:
           // 1) List<ScannedTransaction>
           // 2) Map { 'transactions': List<ScannedTransaction>, 'groupId': String?, 'members': Map<String,String>? }
-          if (extra is List && extra.isNotEmpty && extra.first is ScannedTransaction) {
+          if (extra is List &&
+              extra.isNotEmpty &&
+              extra.first is ScannedTransaction) {
             return ReviewScannedTransactionsPage(
               scannedTransactions: List<ScannedTransaction>.from(extra),
             );
@@ -55,7 +57,9 @@ class AppRouter {
             final txList = extra['transactions'];
             final groupId = extra['groupId'] as String?;
             final members = extra['members'] as Map<String, String>?;
-            if (txList is List && txList.isNotEmpty && txList.first is ScannedTransaction) {
+            if (txList is List &&
+                txList.isNotEmpty &&
+                txList.first is ScannedTransaction) {
               return ReviewScannedTransactionsPage(
                 scannedTransactions: List<ScannedTransaction>.from(txList),
                 initialGroupId: groupId,
