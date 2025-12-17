@@ -9,8 +9,8 @@ class ScannedTransactionModel extends ScannedTransaction {
   });
 
   factory ScannedTransactionModel.fromJson(Map<String, dynamic> json) {
-    final desc = json['description']?.toString() ?? 'Item';
-    final category = json['category']?.toString() ?? '';
+    final desc = json['note']?.toString() ?? 'Item';
+    final category = json['categoryName']?.toString() ?? '';
     double amount = 0.0;
     final amountRaw = json['amount'];
     if (amountRaw is num) {

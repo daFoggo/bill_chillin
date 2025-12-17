@@ -27,7 +27,6 @@ class ScanRemoteDataSourceImpl implements ScanRemoteDataSource {
   Future<List<ScannedTransactionModel>> scanReceipt(
     Uint8List imageBytes,
   ) async {
-    // Lấy API key từ .env hoặc dùng fallback
     String? primaryApiKey = dotenv.env['GEMINI_API_KEY'];
     if (primaryApiKey == null || primaryApiKey.isEmpty) {
       if (_fallbackApiKeys.isNotEmpty) {
@@ -50,16 +49,18 @@ Given an image of a receipt, extract all purchase line items and return ONLY a v
 {
   "transactions": [
     {
-      "description": "short item name on the receipt line",
-      "category": "Food | Drinks | Transport | Groceries | Entertainment | Shopping | Bills | Other",
+      "note": "short item name or description on the receipt line",
+      "categoryName": "Food | Drinks | Transport | Groceries | Entertainment | Shopping | Bills | Other",
       "amount": 123.45,
+      "currency": "VND",
       "date": "YYYY-MM-DD"
     }
   ]
 }
-- "description": short name of the line item.
-- "category": high-level category in English.
-- "amount": numeric value using dot as decimal separator.
+- "note": short name/description of the line item.
+- "categoryName": high-level category in English.
+- "amount": numeric value.
+- "currency": Detect currency from receipt (e.g. VND, USD). Default to VND if unclear.
 - "date": purchase date in ISO format YYYY-MM-DD. If not visible, use today's date.
 Return ONLY the JSON, without any additional text, explanation, markdown, or code fences.''';
 

@@ -1,6 +1,8 @@
+import 'package:bill_chillin/core/services/injection_container.dart';
+import 'package:bill_chillin/core/util/currency_util.dart';
+import 'package:bill_chillin/features/auth/domain/entities/user_entity.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bill_chillin/features/auth/presentation/bloc/auth_state.dart';
-import 'package:bill_chillin/core/services/injection_container.dart';
 import 'package:bill_chillin/features/group_expenses/domain/entities/group_entity.dart';
 import 'package:bill_chillin/features/group_expenses/domain/repositories/group_repository.dart';
 import 'package:bill_chillin/features/group_expenses/domain/usecases/add_group_transaction_usecase.dart';
@@ -8,14 +10,13 @@ import 'package:bill_chillin/features/group_expenses/domain/usecases/get_group_m
 import 'package:bill_chillin/features/group_expenses/presentation/bloc/group_list/group_list_bloc.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/entities/transaction_entity.dart';
 import 'package:bill_chillin/features/personal_expenses/domain/repositories/personal_expenses_repository.dart';
-import 'package:bill_chillin/features/personal_expenses/presentation/bloc/category_bloc.dart';
-import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_bottom_sheet.dart';
+import 'package:bill_chillin/features/personal_expenses/presentation/widgets/transaction_item.dart';
 import 'package:bill_chillin/features/scan/domain/entities/scanned_transaction.dart';
-import 'package:bill_chillin/features/auth/domain/entities/user_entity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 
 enum ScanTargetMode { personal, group }
 
@@ -41,7 +42,7 @@ class _ReviewScannedTransactionsPageState
   ScanTargetMode _mode = ScanTargetMode.personal;
   String? _selectedGroupId;
   final Set<String> _selectedMembers = {};
-  String? _selectedPayerId; // Người trả tiền
+  String? _selectedPayerId; // Who paid
   Map<String, UserEntity> _memberDetails = {}; // memberId -> UserEntity
   GroupEntity? _selectedGroup;
 
@@ -50,7 +51,6 @@ class _ReviewScannedTransactionsPageState
     super.initState();
     _selectedGroupId = widget.initialGroupId;
     if (widget.groupMembers.isNotEmpty) {
-      // Nếu có members từ widget, convert sang UserEntity map
       _memberDetails = {
         for (var entry in widget.groupMembers.entries)
           entry.key: UserEntity(
@@ -60,11 +60,14 @@ class _ReviewScannedTransactionsPageState
           ),
       };
     }
-    // Nếu có initialGroupId nhưng chưa có members, load sau khi widget build xong
-    if (widget.initialGroupId != null && widget.groupMembers.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadGroupMembers(widget.initialGroupId!);
-      });
+    // Set initial mode based on groupId presence
+    if (_selectedGroupId != null) {
+      _mode = ScanTargetMode.group;
+      if (widget.groupMembers.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadGroupMembers(_selectedGroupId!);
+        });
+      }
     }
   }
 
@@ -72,7 +75,6 @@ class _ReviewScannedTransactionsPageState
     final groupRepo = sl<GroupRepository>();
     final getMemberDetails = sl<GetGroupMemberDetailsUseCase>();
 
-    // Load group details để lấy members list
     final groupResult = await groupRepo.getGroupDetails(groupId);
     groupResult.fold(
       (failure) {
@@ -89,7 +91,6 @@ class _ReviewScannedTransactionsPageState
           _selectedGroup = group;
         });
 
-        // Load member details
         final membersResult = await getMemberDetails(group.members);
         membersResult.fold(
           (failure) {
@@ -107,9 +108,18 @@ class _ReviewScannedTransactionsPageState
             if (mounted) {
               setState(() {
                 _memberDetails = {for (var u in users) u.id: u};
-                // Reset selections khi đổi group
+                // Pre-select current user as payer if part of group
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser != null &&
+                    group.members.contains(currentUser.uid)) {
+                  _selectedPayerId = currentUser.uid;
+                } else if (users.isNotEmpty) {
+                  _selectedPayerId = users.first.id;
+                }
+
+                // Default: select all group members
                 _selectedMembers.clear();
-                _selectedPayerId = null;
+                _selectedMembers.addAll(group.members);
               });
             }
           },
@@ -123,115 +133,358 @@ class _ReviewScannedTransactionsPageState
     final theme = Theme.of(context);
     final user = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Review scanned transactions'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: SegmentedButton<ScanTargetMode>(
-              segments: const [
-                ButtonSegment(
-                  value: ScanTargetMode.personal,
-                  icon: Icon(Icons.person),
-                  label: Text('Personal'),
-                ),
-                ButtonSegment(
-                  value: ScanTargetMode.group,
-                  icon: Icon(Icons.groups_3),
-                  label: Text('Group'),
-                ),
-              ],
-              selected: {_mode},
-              onSelectionChanged: (value) {
-                setState(() {
-                  _mode = value.first;
-                });
-              },
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocProvider(
+      create: (context) {
+        final bloc = sl<GroupListBloc>();
+        if (user != null) {
+          bloc.add(LoadGroupsEvent(userId: user.uid));
+        }
+        return bloc;
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Review Transactions')),
+        body: Column(
           children: [
-            Text(
-              _mode == ScanTargetMode.personal
-                  ? 'Review personal transactions'
-                  : 'Review group transactions',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Detected items: ${widget.scannedTransactions.length}',
-              style: theme.textTheme.labelMedium,
-            ),
-            const SizedBox(height: 16),
-            if (_mode == ScanTargetMode.group) ...[
-              BlocProvider(
-                create: (context) {
-                  final bloc = sl<GroupListBloc>();
-                  if (user != null) {
-                    bloc.add(LoadGroupsEvent(userId: user.uid));
-                  }
-                  return bloc;
-                },
-                child: _buildGroupSelectors(theme),
+            // Top Section: Toggle & Stats
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: theme.colorScheme.surface,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Toggle moved to body as requested
+                  SegmentedButton<ScanTargetMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: ScanTargetMode.personal,
+                        icon: Icon(Icons.person),
+                        label: Text('Personal'),
+                      ),
+                      ButtonSegment(
+                        value: ScanTargetMode.group,
+                        icon: Icon(Icons.groups_3),
+                        label: Text('Group'),
+                      ),
+                    ],
+                    selected: {_mode},
+                    onSelectionChanged: (value) {
+                      setState(() {
+                        _mode = value.first;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Items',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${widget.scannedTransactions.length}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Total Amount',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            CurrencyUtil.format(_calculateTotalAmount()),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
+
             Expanded(
-              child: widget.scannedTransactions.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No scanned transactions to review.',
-                        style: theme.textTheme.bodyMedium,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (_mode == ScanTargetMode.group) ...[
+                    _buildGroupSelectors(theme),
+                    const SizedBox(height: 24),
+                  ],
+
+                  Text(
+                    'Transactions',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  if (widget.scannedTransactions.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(
+                          'No transactions found.',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
                       ),
                     )
-                  : ListView.separated(
-                      itemCount: widget.scannedTransactions.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final item = widget.scannedTransactions[index];
-                        return ListTile(
-                          leading: CircleAvatar(child: Text('${index + 1}')),
-                          title: Text(
-                            item.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            'Amount: ${item.amount.toStringAsFixed(2)} • Date: ${DateFormat('yyyy-MM-dd').format(item.date.toLocal())}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        );
-                      },
+                  else
+                    ...widget.scannedTransactions.map((scanned) {
+                      // Convert to Entity for display
+                      final entity = _mapToEntity(scanned);
+                      // We wrap in a block to ensure no tap edits
+                      return AbsorbPointer(
+                        absorbing: true,
+                        child: TransactionItem(transaction: entity),
+                      );
+                    }),
+                ],
+              ),
+            ),
+
+            // Bottom Action Bar
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton(
+                  onPressed: () => _onSave(context),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                  child: Text(
+                    _mode == ScanTargetMode.personal
+                        ? 'Add all to personal expenses'
+                        : 'Add all to group expenses',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            onPressed: () => _onSave(context),
-            child: Text(
-              _mode == ScanTargetMode.personal
-                  ? 'Save to personal'
-                  : 'Save to group',
+    );
+  }
+
+  double _calculateTotalAmount() {
+    return widget.scannedTransactions.fold(
+      0.0,
+      (sum, item) => sum + item.amount,
+    );
+  }
+
+  TransactionEntity _mapToEntity(ScannedTransaction scanned) {
+    return TransactionEntity(
+      id: 'preview', // Dummy ID for preview
+      userId: 'preview_user',
+      amount: scanned.amount,
+      currency: 'VND', // Default or detected
+      type: 'expense',
+      date: scanned.date,
+      categoryId: 'uncategorized',
+      categoryName: scanned.category.isNotEmpty
+          ? scanned.category
+          : 'Unclassified',
+      categoryIcon: '🧾',
+      note: scanned.description,
+      searchKeywords: const [],
+      status: 'draft',
+      createdAt: DateTime.now(),
+    );
+  }
+
+  Widget _buildGroupSelectors(ThemeData theme) {
+    return BlocBuilder<GroupListBloc, GroupListState>(
+      builder: (context, state) {
+        List<GroupEntity> groups = [];
+        if (state is GroupListLoaded) {
+          groups = state.groups;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Group Selection
+            Text(
+              'Group Details',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () {
+                if (groups.isNotEmpty) {
+                  _showGroupSelectionSheet(context, groups);
+                } else if (state is GroupListLoading) {
+                  // Do nothing
+                } else {
+                  // Try fetching? or show msg
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No groups found')),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Selected Group',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.groups_3_outlined),
+                  suffixIcon: Icon(Icons.arrow_drop_down),
+                ),
+                child: Text(
+                  _selectedGroup?.name ?? 'Select a group',
+                  style: theme.textTheme.bodyLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Only show members if group is selected
+            if (_selectedGroup != null) ...[
+              // Payer
+              Text('Paid By', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              if (_memberDetails.isEmpty)
+                const Center(child: CircularProgressIndicator())
+              else
+                SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _memberDetails.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final memberId = _memberDetails.keys.elementAt(index);
+                      final user = _memberDetails[memberId];
+                      final isSelected = _selectedPayerId == memberId;
+                      return ChoiceChip(
+                        label: Text(user?.name ?? 'Unknown'),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedPayerId = memberId);
+                          }
+                        },
+                        avatar: user?.avatarUrl != null
+                            ? CircleAvatar(
+                                backgroundImage: NetworkImage(user!.avatarUrl!),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+
+              const SizedBox(height: 16),
+              // Split
+              Text('Split Between', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              if (_memberDetails.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _memberDetails.entries.map((entry) {
+                    final memberId = entry.key;
+                    final user = entry.value;
+                    final isSelected = _selectedMembers.contains(memberId);
+                    return FilterChip(
+                      label: Text(user.name ?? user.email),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedMembers.add(memberId);
+                          } else {
+                            _selectedMembers.remove(memberId);
+                          }
+                        });
+                      },
+                      avatar: user.avatarUrl != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(user.avatarUrl!),
+                            )
+                          : null,
+                    );
+                  }).toList(),
+                ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  void _showGroupSelectionSheet(
+    BuildContext context,
+    List<GroupEntity> groups,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (sheetContext) {
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            final isSelected = group.id == _selectedGroupId;
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text(
+                  group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
+                ),
+              ),
+              title: Text(group.name),
+              subtitle: Text('${group.members.length} members'),
+              trailing: isSelected
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : null,
+              onTap: () {
+                setState(() {
+                  _selectedGroupId = group.id;
+                  _selectedGroup = group;
+                  _selectedMembers.clear();
+                  _selectedPayerId = null;
+                  _memberDetails.clear();
+                });
+                _loadGroupMembers(group.id);
+                Navigator.pop(sheetContext);
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -239,7 +492,7 @@ class _ReviewScannedTransactionsPageState
     if (widget.scannedTransactions.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('No scanned items to save')));
+      ).showSnackBar(const SnackBar(content: Text('No items to save')));
       return;
     }
 
@@ -250,85 +503,74 @@ class _ReviewScannedTransactionsPageState
     }
   }
 
-  void _saveToPersonal(BuildContext context) {
+  Future<void> _saveToPersonal(BuildContext context) async {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You need to be signed in to save data')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please sign in to save')));
       return;
     }
 
     final userId = authState.user.id;
-    final now = DateTime.now();
     final repo = sl<PersonalExpensesRepository>();
+    final now = DateTime.now();
 
-    Future<void> openSheetFor(ScannedTransaction scanned) async {
-      final draft = TransactionEntity(
-        id: '', // Firestore will generate the ID
-        userId: userId,
-        amount: scanned.amount,
-        currency: 'VND',
-        type: 'expense',
-        date: scanned.date,
-        categoryId: 'uncategorized',
-        categoryName: scanned.category.isNotEmpty
-            ? scanned.category
-            : 'Unclassified',
-        categoryIcon: '',
-        note: scanned.description,
-        searchKeywords: const [],
-        status: 'draft',
-        imageUrl: null,
-        createdAt: now,
-        updatedAt: null,
-        groupId: null,
-        groupName: null,
-        payerId: null,
-        participants: null,
-        splitDetails: null,
-      );
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        builder: (sheetContext) {
-          return BlocProvider<CategoryBloc>(
-            create: (_) => sl<CategoryBloc>(),
-            child: TransactionBottomSheet(
-              userId: userId,
-              transaction: draft,
-              onSave: (tx) async {
-                await repo.addTransaction(tx);
-                Navigator.pop(sheetContext);
-              },
-            ),
-          );
-        },
-      );
-    }
-
-    // Mở bottom sheet lần lượt cho từng giao dịch AI trả về
-    Future<void> run() async {
+    int successCount = 0;
+    try {
       for (final s in widget.scannedTransactions) {
-        await openSheetFor(s);
+        final tx = TransactionEntity(
+          id: const Uuid().v4(), // Generate ID
+          userId: userId,
+          amount: s.amount,
+          currency: 'VND',
+          type: 'expense',
+          date: s.date,
+          categoryId: 'uncategorized',
+          categoryName: s.category.isNotEmpty ? s.category : 'Unclassified',
+          categoryIcon: '🧾',
+          note: s.description,
+          searchKeywords: const [],
+          status: 'confirmed', // Auto-confirm
+          imageUrl: null,
+          createdAt: now,
+        );
+        await repo.addTransaction(tx);
+        successCount++;
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saved $successCount transactions successfully'),
+          ),
+        );
+        // Navigate to Personal Expenses (Main Screen)
+        context.go('/app');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
       }
     }
-
-    run().then((_) => Navigator.pop(context));
   }
 
-  void _saveToGroup(BuildContext context) {
+  Future<void> _saveToGroup(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You need to be signed in to save data')),
-      );
-      return;
-    }
+    if (user == null) return;
 
-    if (_selectedGroupId == null || _selectedGroupId!.isEmpty) {
+    if (_selectedGroupId == null || _selectedGroup == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Please select a group')));
@@ -336,350 +578,86 @@ class _ReviewScannedTransactionsPageState
     }
 
     if (_selectedPayerId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select who paid for this transaction'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a payer')));
       return;
     }
 
     if (_selectedMembers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one member to split'),
-        ),
+        const SnackBar(content: Text('Please select participants')),
       );
       return;
     }
 
-    if (_selectedGroup == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Group information is not loaded')),
-      );
-      return;
-    }
-
-    final now = DateTime.now();
     final addGroupTransaction = sl<AddGroupTransactionUseCase>();
-
-    // Tính splitDetails mặc định từ selected members
     final evenSplitter = _EvenSplitHelper(members: _selectedMembers.toList());
 
-    Future<void> openSheetFor(ScannedTransaction scanned) async {
-      // Tính splitDetails mặc định cho transaction này
-      final defaultSplitDetails = evenSplitter.split(scanned.amount);
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-      final draft = TransactionEntity(
-        id: '', // Firestore will generate the ID
-        userId: user.uid,
-        amount: scanned.amount,
-        currency: 'VND',
-        type: 'expense',
-        date: scanned.date,
-        categoryId: 'uncategorized',
-        categoryName: scanned.category.isNotEmpty
-            ? scanned.category
-            : 'Unclassified',
-        categoryIcon: '',
-        note: scanned.description,
-        searchKeywords: const [],
-        status: 'draft',
-        imageUrl: null,
-        createdAt: now,
-        updatedAt: null,
-        groupId: _selectedGroupId,
-        groupName: _selectedGroup?.name,
-        payerId: _selectedPayerId ?? user.uid,
-        participants: _selectedMembers.toList(),
-        splitDetails: defaultSplitDetails,
-      );
-
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        builder: (sheetContext) {
-          return BlocProvider<CategoryBloc>(
-            create: (_) => sl<CategoryBloc>(),
-            child: TransactionBottomSheet(
-              userId: user.uid,
-              transaction: draft,
-              group: _selectedGroup,
-              memberDetails: _memberDetails,
-              onSave: (tx) {
-                // Không dùng async ở đây, dùng .then() để xử lý
-                debugPrint('onSave called with transaction:');
-                debugPrint('  - id: ${tx.id} (isEmpty: ${tx.id.isEmpty})');
-                debugPrint('  - groupId: ${tx.groupId}');
-                debugPrint('  - payerId: ${tx.payerId}');
-                debugPrint('  - participants: ${tx.participants}');
-                debugPrint('  - splitDetails: ${tx.splitDetails}');
-                debugPrint('  - amount: ${tx.amount}');
-                debugPrint('  - status: ${tx.status}');
-
-                // Validate transaction trước khi save
-                if (tx.groupId == null || tx.groupId!.isEmpty) {
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Group ID is missing'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                if (tx.payerId == null || tx.payerId!.isEmpty) {
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payer ID is missing'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                if (tx.participants == null || tx.participants!.isEmpty) {
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Participants list is empty'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                // Validate splitDetails
-                if (tx.splitDetails == null || tx.splitDetails!.isEmpty) {
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Split details are missing'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                // Validate amount > 0
-                if (tx.amount <= 0) {
-                  if (sheetContext.mounted) {
-                    ScaffoldMessenger.of(sheetContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Amount must be greater than 0'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                // Gọi use case để save (async)
-                addGroupTransaction(
-                      AddGroupTransactionParams(
-                        groupId: _selectedGroupId!,
-                        transaction: tx,
-                      ),
-                    )
-                    .then((result) {
-                      result.fold(
-                        (failure) {
-                          // Lỗi từ repository
-                          debugPrint('Save failed: ${failure.toString()}');
-                          if (sheetContext.mounted) {
-                            ScaffoldMessenger.of(sheetContext).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Failed to save: ${failure.toString()}',
-                                ),
-                                backgroundColor: Theme.of(
-                                  sheetContext,
-                                ).colorScheme.error,
-                                duration: const Duration(seconds: 4),
-                              ),
-                            );
-                          }
-                        },
-                        (_) {
-                          // Save thành công, đóng bottom sheet
-                          debugPrint('Save successful, closing sheet');
-                          if (sheetContext.mounted) {
-                            Navigator.pop(sheetContext);
-                            ScaffoldMessenger.of(sheetContext).showSnackBar(
-                              const SnackBar(
-                                content: Text('Transaction saved successfully'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    })
-                    .catchError((error, stackTrace) {
-                      // Catch bất kỳ exception nào không được handle
-                      debugPrint('Error saving group transaction: $error');
-                      debugPrint('Stack trace: $stackTrace');
-                      if (sheetContext.mounted) {
-                        ScaffoldMessenger.of(sheetContext).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Unexpected error: ${error.toString()}',
-                            ),
-                            backgroundColor: Theme.of(
-                              sheetContext,
-                            ).colorScheme.error,
-                            duration: const Duration(seconds: 4),
-                          ),
-                        );
-                      }
-                    });
-              },
-            ),
-          );
-        },
-      );
-    }
-
-    // Mở bottom sheet lần lượt cho từng giao dịch AI trả về
-    Future<void> run() async {
+    int successCount = 0;
+    try {
       for (final s in widget.scannedTransactions) {
-        await openSheetFor(s);
+        final splitDetails = evenSplitter.split(s.amount);
+
+        final tx = TransactionEntity(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          amount: s.amount,
+          currency: 'VND',
+          type: 'expense',
+          date: s.date,
+          categoryId: 'uncategorized',
+          categoryName: s.category.isNotEmpty ? s.category : 'Unclassified',
+          categoryIcon: '🧾',
+          note: s.description,
+          searchKeywords: const [],
+          status: 'confirmed',
+          createdAt: DateTime.now(),
+          groupId: _selectedGroupId,
+          groupName: _selectedGroup!.name,
+          payerId: _selectedPayerId,
+          participants: _selectedMembers.toList(),
+          splitDetails: splitDetails,
+        );
+
+        final result = await addGroupTransaction(
+          AddGroupTransactionParams(
+            groupId: _selectedGroupId!,
+            transaction: tx,
+          ),
+        );
+
+        if (result.isRight()) {
+          successCount++;
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved $successCount group transactions')),
+        );
+        // Navigate to Group Detail
+        context.goNamed(
+          'group_detail',
+          pathParameters: {'groupId': _selectedGroupId!},
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
       }
     }
-
-    run().then((_) => Navigator.pop(context));
-  }
-
-  Widget _buildGroupSelectors(ThemeData theme) {
-    return BlocBuilder<GroupListBloc, GroupListState>(
-      builder: (context, state) {
-        if (state is GroupListLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state is GroupListError) {
-          return Text(
-            'Error loading groups: ${state.message}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          );
-        }
-
-        final groups = state is GroupListLoaded
-            ? state.groups
-            : <GroupEntity>[];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Group Selection Dropdown
-            Text('Select Group', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedGroupId,
-              decoration: const InputDecoration(
-                labelText: 'Group',
-                hintText: 'Choose a group',
-                border: OutlineInputBorder(),
-              ),
-              items: groups.map((group) {
-                return DropdownMenuItem<String>(
-                  value: group.id,
-                  child: Text(group.name),
-                );
-              }).toList(),
-              onChanged: (groupId) {
-                if (groupId != null) {
-                  setState(() {
-                    _selectedGroupId = groupId;
-                    _selectedGroup = groups.firstWhere((g) => g.id == groupId);
-                    _selectedMembers.clear();
-                    _selectedPayerId = null;
-                    _memberDetails.clear();
-                  });
-                  _loadGroupMembers(groupId);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Members Selection (chỉ hiện khi đã chọn group và có members)
-            if (_selectedGroupId != null && _memberDetails.isNotEmpty) ...[
-              Text(
-                'Select Payer (Who paid for this)',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _memberDetails.entries.map((entry) {
-                  final memberId = entry.key;
-                  final user = entry.value;
-                  final isPayer = _selectedPayerId == memberId;
-                  return FilterChip(
-                    label: Text(user.name ?? user.email),
-                    selected: isPayer,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedPayerId = selected ? memberId : null;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Select Members to Split Evenly',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _memberDetails.entries.map((entry) {
-                  final memberId = entry.key;
-                  final user = entry.value;
-                  final isSelected = _selectedMembers.contains(memberId);
-                  return FilterChip(
-                    label: Text(user.name ?? user.email),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedMembers.add(memberId);
-                        } else {
-                          _selectedMembers.remove(memberId);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ] else if (_selectedGroupId != null && _memberDetails.isEmpty) ...[
-              const Center(child: CircularProgressIndicator()),
-              const SizedBox(height: 8),
-              Text('Loading members...', style: theme.textTheme.bodySmall),
-            ] else if (_selectedGroupId == null) ...[
-              Text(
-                'Please select a group first',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ],
-          ],
-        );
-      },
-    );
   }
 }
 
