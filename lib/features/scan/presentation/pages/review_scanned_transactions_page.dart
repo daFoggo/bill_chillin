@@ -645,7 +645,7 @@ class _ReviewScannedTransactionsPageState
           SnackBar(content: Text('Saved $successCount group transactions')),
         );
         // Navigate to Group Detail
-        context.goNamed(
+        context.pushReplacementNamed(
           'group_detail',
           pathParameters: {'groupId': _selectedGroupId!},
         );

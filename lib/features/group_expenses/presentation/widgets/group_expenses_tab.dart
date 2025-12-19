@@ -21,6 +21,7 @@ class GroupExpensesTab extends StatefulWidget {
 class _GroupExpensesTabState extends State<GroupExpensesTab>
     with SingleTickerProviderStateMixin {
   late TabController _monthlyTabController;
+  int _selectedYear = DateTime.now().year;
 
   @override
   void initState() {
@@ -49,10 +50,27 @@ class _GroupExpensesTabState extends State<GroupExpensesTab>
   Widget build(BuildContext context) {
     // Filter transactions by selected month
     final selectedMonth = _monthlyTabController.index + 1;
-    final currentYear = DateTime.now().year; // Simplified for now
+
+    // Get available years from transactions
+    final years =
+        widget.state.transactions.map((tx) => tx.date.year).toSet().toList()
+          ..sort((a, b) => b.compareTo(a)); // Descending order
+
+    if (years.isEmpty) {
+      years.add(DateTime.now().year);
+    }
+
+    // Ensure selected year is valid
+    if (!years.contains(_selectedYear)) {
+      if (years.contains(DateTime.now().year)) {
+        _selectedYear = DateTime.now().year;
+      } else {
+        _selectedYear = years.first;
+      }
+    }
 
     final filteredTransactions = widget.state.transactions.where((tx) {
-      return tx.date.month == selectedMonth && tx.date.year == currentYear;
+      return tx.date.month == selectedMonth && tx.date.year == _selectedYear;
     }).toList();
 
     final totalMonthExpense = filteredTransactions
@@ -61,8 +79,36 @@ class _GroupExpensesTabState extends State<GroupExpensesTab>
 
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Year', style: Theme.of(context).textTheme.titleMedium),
+              DropdownButton<int>(
+                value: _selectedYear,
+                items: years.map((year) {
+                  return DropdownMenuItem<int>(
+                    value: year,
+                    child: Text(year.toString()),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedYear = value;
+                    });
+                  }
+                },
+                underline: Container(), // Remove default underline
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        ),
         TotalBalanceWidget(totalBalance: totalMonthExpense),
         MonthlyTabWidget(tabController: _monthlyTabController),
+
         Expanded(
           child: filteredTransactions.isEmpty
               ? const Center(child: Text("No transactions this month"))

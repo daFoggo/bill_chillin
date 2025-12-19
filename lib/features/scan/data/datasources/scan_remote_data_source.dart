@@ -43,8 +43,11 @@ class ScanRemoteDataSourceImpl implements ScanRemoteDataSource {
     Exception? lastException;
     http.Response? successfulResponse;
 
-    const prompt = '''
+    final todayDate = DateTime.now().toIso8601String().split('T').first;
+    final prompt =
+        '''
 You are a receipt parsing assistant.
+Today is $todayDate.
 Given an image of a receipt, extract all purchase line items and return ONLY a valid JSON object with this exact structure:
 {
   "transactions": [
@@ -61,7 +64,11 @@ Given an image of a receipt, extract all purchase line items and return ONLY a v
 - "categoryName": high-level category in English.
 - "amount": numeric value.
 - "currency": Detect currency from receipt (e.g. VND, USD). Default to VND if unclear.
-- "date": purchase date in ISO format YYYY-MM-DD. If not visible, use today's date.
+- "date": purchase date in ISO format YYYY-MM-DD.
+  - IMPORTANT: If the receipt is in Vietnamese or uses VND, assume the date format is DD-MM-YY or DD-MM-YYYY.
+  - Example: "17/12/25" or "17-12-25" should be interpreted as 17th December 2025 (2025-12-17), NOT 2017.
+  - Treat 2-digit years (e.g., '24', '25') as 2024, 2025.
+  - If strictly not visible or unclear, use "$todayDate".
 Return ONLY the JSON, without any additional text, explanation, markdown, or code fences.''';
 
     final requestBody = {
@@ -209,6 +216,41 @@ Return ONLY the JSON, without any additional text, explanation, markdown, or cod
 
     final List<dynamic> items =
         (jsonResult['transactions'] as List?) ?? const [];
-    return items.map((item) => ScannedTransactionModel.fromJson(item)).toList();
+    return items.map((item) {
+      final model = ScannedTransactionModel.fromJson(item);
+      final improvedDate = _improveDateLogic(model.date);
+      return ScannedTransactionModel(
+        description: model.description,
+        category: model.category,
+        amount: model.amount,
+        date: improvedDate,
+      );
+    }).toList();
+  }
+
+  DateTime _improveDateLogic(DateTime aiDate) {
+    final now = DateTime.now();
+
+    if (aiDate.year < 2023) {
+      final potentialYear = 2000 + aiDate.day;
+      if (potentialYear >= 2023 && potentialYear <= now.year + 1) {
+        final originalFirstPart = aiDate.year % 100; // 17
+        try {
+          final correctedDate = DateTime(
+            potentialYear,
+            aiDate.month,
+            originalFirstPart,
+          );
+          debugPrint(
+            'Corrected Date Logic: ${aiDate.toIso8601String()} -> ${correctedDate.toIso8601String()}',
+          );
+          return correctedDate;
+        } catch (_) {}
+      }
+
+      return now;
+    }
+
+    return aiDate;
   }
 }

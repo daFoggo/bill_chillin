@@ -70,7 +70,14 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
   @override
   Future<void> joinGroup(String groupId, String userId) async {
     try {
-      await firestore.collection('groups').doc(groupId).update({
+      final groupRef = firestore.collection('groups').doc(groupId);
+      final docSnapshot = await groupRef.get();
+
+      if (!docSnapshot.exists) {
+        throw ServerException('Group not found');
+      }
+
+      await groupRef.update({
         'members': FieldValue.arrayUnion([userId]),
       });
     } catch (e) {
