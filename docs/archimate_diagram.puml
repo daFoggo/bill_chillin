@@ -1,0 +1,75 @@
+@startuml
+!include <archimate/Archimate>
+
+title Archimate Diagram - Bill Chillin Project (Layout Optimized)
+
+skinparam linetype ortho
+skinparam nodesep 10
+skinparam ranksep 50
+
+' Business Layer
+Business_Actor(User, "User")
+
+package "Business Services" as BizServices {
+    Business_Service(PersonalFinanceSvc, "Personal Finance\nManagement")
+    Business_Service(GroupFinanceSvc, "Group Finance\nManagement")
+    Business_Service(ScanSvc, "Receipt Scanning\nService")
+}
+
+' Application Layer
+package "Bill Chillin Mobile App" as MobileApp {
+    
+    together {
+        Application_Service(AppSvc_Personal, "Manage Personal\nExpenses")
+        Application_Service(AppSvc_Group, "Manage Group\nExpenses")
+        Application_Service(AppSvc_Scan, "Scan Receipt\nProcessing")
+    }
+
+    Application_Component(Presentation, "Presentation Layer\n(UI/Bloc)")
+    Application_Component(Domain, "Domain Layer\n(Business Logic)")
+    Application_Component(Data, "Data Layer\n(Repos/DataSource)")
+
+    rectangle "Modules" as Modules {
+        Application_Component(AuthModule, "Auth\nModule")
+        Application_Component(ExpenseModule, "Expense\nModule")
+    }
+}
+
+' Technology Layer
+package "Infrastructure" as Infra {
+    Technology_Service(FirebaseAuth, "Firebase Auth")
+    Technology_Service(Firestore, "Cloud Firestore")
+    Technology_Service(GeminiAI, "Gemini AI\n(OCR & Processing)")
+}
+
+' Relationships
+
+' Layout fix: User on top
+User -down-> PersonalFinanceSvc
+User -down-> GroupFinanceSvc
+User -down-> ScanSvc
+
+' Realization
+PersonalFinanceSvc <|-down- AppSvc_Personal
+GroupFinanceSvc <|-down- AppSvc_Group
+ScanSvc <|-down- AppSvc_Scan
+
+' App Internals
+AppSvc_Personal <-down- Presentation : assigned
+AppSvc_Group <-down- Presentation : assigned
+AppSvc_Scan <-down- Presentation : assigned
+
+Presentation .down.> Domain : uses
+Domain <|.down. Data : implements
+
+' Modules relationship - simplify just to show they exist across layers
+Modules -[hidden]- Presentation
+ExpenseModule ..> Domain
+AuthModule ..> Domain
+
+' Data to Tech
+Data -down-> FirebaseAuth
+Data -down-> Firestore
+Data -down-> GeminiAI
+
+@enduml

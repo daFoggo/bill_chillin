@@ -1,0 +1,77 @@
+@startuml
+!include <archimate/Archimate>
+
+title Database Design - Bill Chillin (Firestore Schema)
+
+' Hide standard class methods/circle
+hide circle
+hide methods
+
+' Styling
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2C3E50
+    BorderColor #2C3E50
+    HeaderBackgroundColor #F5F5F5
+}
+
+package "Core Collections" {
+    class "users" as Users <<Collection>> {
+        * **id** : string (PK)
+        --
+        * email : string
+        * name : string
+        avatarUrl : string
+    }
+
+    class "groups" as Groups <<Collection>> {
+        * **id** : string (PK)
+        --
+        * name : string
+        * createdBy : string (Ref: users.id)
+        * members : string[] (Ref: users.id)
+        imageUrl : string
+        currency : string
+    }
+
+    class "categories" as Categories <<Collection>> {
+        * **id** : string (PK)
+        --
+        * name : string
+        * icon : string
+        * type : string
+    }
+}
+
+package "Transaction Data" {
+    class "transactions" as Transactions <<Collection>> {
+        * **id** : string (PK)
+        --
+        * userId : string (Ref: users.id)
+        * amount : double
+        * date : timestamp
+        * type : string
+        --
+        * categoryId : string
+        categoryName : string
+        --
+        groupId : string (Ref: groups.id)
+        participants : string[]
+        splitDetails : map
+    }
+}
+
+' Relationships with explicit direction for disjoint layout
+Users -right-> Groups : "is member of"
+Users -down-> Transactions : "performs"
+Groups -down-> Transactions : "contains"
+Users -down-> Categories : "defines"
+Categories -right-> Transactions : "classifies"
+
+' Layout adjustments
+Users -[hidden]- Categories
+
+@enduml

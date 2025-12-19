@@ -1,0 +1,59 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor User as "Người dùng"
+actor "Gemini AI" as AI
+
+package "Bill Chillin App" {
+
+  package "Authentication" {
+    usecase "Đăng nhập (Google/Email)" as UC_Login
+    usecase "Đăng ký" as UC_Register
+    usecase "Đăng xuất" as UC_Logout
+    usecase "Xem/Sửa Hồ Sơ" as UC_Profile
+  }
+
+  package "Quản lý Chi tiêu Cá nhân" {
+    usecase "Xem danh sách giao dịch" as UC_ViewTrans
+    usecase "Thêm giao dịch mới" as UC_AddTrans
+    usecase "Sửa/Xóa giao dịch" as UC_EditTrans
+    usecase "Xem báo cáo/Biểu đồ" as UC_Report
+  }
+
+  package "Quản lý Chi tiêu Nhóm" {
+    usecase "Tạo nhóm mới" as UC_CreateGroup
+    usecase "Tham gia nhóm (Link/QR)" as UC_JoinGroup
+    usecase "Xem chi tiết nhóm" as UC_ViewGroup
+    usecase "Thêm chi tiêu nhóm" as UC_AddGroupTrans
+    usecase "Xem thông tin nợ" as UC_ViewDebt
+  }
+
+  package "Scan Service" {
+    usecase "Quét hóa đơn (OCR)" as UC_Scan
+  }
+
+}
+
+User --> UC_Login
+User --> UC_Register
+User --> UC_Logout
+User --> UC_Profile
+
+User --> UC_ViewTrans
+User --> UC_AddTrans
+User --> UC_EditTrans
+User --> UC_Report
+
+User --> UC_CreateGroup
+User --> UC_JoinGroup
+User --> UC_ViewGroup
+User --> UC_AddGroupTrans
+User --> UC_ViewDebt
+User --> UC_Scan
+
+UC_Scan ..> AI : Uses
+UC_AddTrans ..> UC_Scan : Include (Optional)
+UC_AddGroupTrans ..> UC_Scan : Include (Optional)
+
+@enduml

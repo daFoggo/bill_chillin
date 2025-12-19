@@ -2,7 +2,7 @@
 
 - **Ý nghĩa tên**: Bill + Chilling, and the most important thing...
   ![[Pasted image 20251204024806.png]]
-- Mascot đại diện dự án: Capybara, Sloth ( Con lười á ),...
+- Mascot đại diện dự án: Capybara,...
 - Mô tả dự án: BillChillin là ứng dụng giúp giải quyết nỗi đau mỗi khi chia tiền hoán đơn nhóm và quản lý tài chính cá nhân chỉ trong một ứng dụng duy nhất, với phong cách năng động và giải trí. Kết hợp với các tính năng đổi mới như OCR để quét text từ hoá đơn hay **kiểm soát tài chính với việc nuôi pet dựa trên tích luỹ tiền ( cái này chém gió :v** ).
 - Techstack ( Cái này Gemini recommend nhưng về cơ bản là chuẩn):
 
@@ -14,8 +14,7 @@
 | **UI Library**           | **Material Design (Built-in)** | Sử dụng các thành phần giao diện người dùng tiêu chuẩn của Google, dễ dàng tùy chỉnh màu sắc và phong cách.      |
 | **Biểu đồ/Đồ thị**       | **fl_chart**                   | Thư viện tạo biểu đồ linh hoạt, dùng để hiển thị báo cáo thống kê thu chi cá nhân và nhóm.                       |
 | **Database (Cloud)**     | **Firebase Firestore**         | Cơ sở dữ liệu NoSQL, cung cấp tính năng đồng bộ hóa real-time để quản lý giao dịch và dữ liệu nhóm.              |
-| **Database (Local)**     | **Hive / Isar**                | Cơ sở dữ liệu cục bộ, tốc độ cao, dùng để lưu trữ dữ liệu ngoại tuyến hoặc cache.                                |
-| **AI/OCR**               | **Google ML Kit**              | Dùng cho tính năng nhận dạng văn bản (Text Recognition) từ hóa đơn, hỗ trợ thêm nhanh giao dịch cá nhân và nhóm. |
+| **AI/OCR**               | **Gemini AI **                 | Dùng cho tính năng nhận dạng văn bản (Text Recognition) từ hóa đơn, hỗ trợ thêm nhanh giao dịch cá nhân và nhóm. |
 | **Định tuyến (Routing)** | **GoRouter**                   | Quản lý việc điều hướng (navigation) giữa các màn hình, hỗ trợ cấu trúc app phức tạp và Deep Linking.            |
 
 # 2. Chức năng cốt lõi (Bắt buộc phải có)
