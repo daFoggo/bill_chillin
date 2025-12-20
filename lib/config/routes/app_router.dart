@@ -34,7 +34,13 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const MainScreen(),
+        builder: (context, state) {
+          int initialIndex = 0;
+          if (state.extra is Map && (state.extra as Map).containsKey('tab')) {
+            initialIndex = (state.extra as Map)['tab'] as int;
+          }
+          return MainScreen(initialIndex: initialIndex);
+        },
       ),
       GoRoute(
         path: '/app/scan',

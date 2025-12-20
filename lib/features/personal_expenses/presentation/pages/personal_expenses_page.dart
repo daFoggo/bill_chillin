@@ -97,6 +97,16 @@ class _PersonalExpensesViewState extends State<PersonalExpensesView>
       initialIndex: initialIndex,
     );
     _tabController.addListener(_onTabChanged);
+
+    // Reload data when entering this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        context.read<PersonalExpensesBloc>().add(
+          LoadPersonalExpensesEvent(authState.user.id),
+        );
+      }
+    });
   }
 
   final TextEditingController _searchController = TextEditingController();

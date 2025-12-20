@@ -17,26 +17,44 @@ import 'package:bill_chillin/features/main/presentation/widgets/expandable_fab.d
 import 'package:go_router/go_router.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+
+  const MainScreen({super.key, this.initialIndex = 0}); // Updated constructor
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-  late List<Widget> _pages;
+  late int _currentIndex;
+  Key _personalExpensesKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      const HomePage(),
-      const PersonalExpensesPage(),
-      const SizedBox(),
-      const GroupExpensesPage(),
-      const ProfilePage(),
-    ];
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
+  void didUpdateWidget(MainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialIndex == 1) {
+      // Force reload of Personal Expenses tab when navigating specifically to it (e.g. from Scan)
+      _personalExpensesKey = UniqueKey();
+      if (_currentIndex != 1) {
+        setState(() {
+          _currentIndex = 1;
+        });
+      } else {
+        // Even if index didn't change, we need setState to pick up the new Key
+        setState(() {});
+      }
+    } else if (widget.initialIndex != oldWidget.initialIndex &&
+        widget.initialIndex != _currentIndex) {
+      setState(() {
+        _currentIndex = widget.initialIndex;
+      });
+    }
   }
 
   void _onItemTapped(int index) {
@@ -89,7 +107,13 @@ class _MainScreenState extends State<MainScreen> {
               }
             },
             child: Scaffold(
-              body: _pages[_currentIndex],
+              body: [
+                const HomePage(),
+                PersonalExpensesPage(key: _personalExpensesKey),
+                const SizedBox(),
+                const GroupExpensesPage(),
+                const ProfilePage(),
+              ][_currentIndex],
               floatingActionButton: ExpandableFab(
                 onCreateTransaction: () {
                   if (_currentIndex != 1) {
